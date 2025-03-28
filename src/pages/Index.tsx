@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import AppLayout from '@/components/AppLayout';
@@ -11,15 +10,34 @@ import { Event, EventCategory } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { LayoutList, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
   const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>(mockEvents);
+  const [mainEvent, setMainEvent] = useState<Event | null>(null);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('list');
   
-  // Handle category selection and navigate if it's "party"
+  useEffect(() => {
+    let filteredEvents = [...mockEvents];
+    
+    if (selectedCategory) {
+      filteredEvents = mockEvents.filter(event => event.category === selectedCategory);
+    }
+    
+    if (filteredEvents.length > 0) {
+      setMainEvent(filteredEvents[0]);
+      setEvents(filteredEvents.slice(1));
+    } else {
+      setMainEvent(null);
+      setEvents([]);
+    }
+    
+    setCurrentEventIndex(0);
+  }, [selectedCategory]);
+
   const handleCategorySelect = (category: EventCategory | null) => {
     if (category === 'party') {
       navigate('/house-parties');
@@ -27,17 +45,6 @@ const Index = () => {
       setSelectedCategory(category);
     }
   };
-  
-  // Filter events based on selected category
-  useEffect(() => {
-    if (selectedCategory) {
-      const filtered = mockEvents.filter(event => event.category === selectedCategory);
-      setEvents(filtered);
-    } else {
-      setEvents(mockEvents);
-    }
-    setCurrentEventIndex(0);
-  }, [selectedCategory]);
 
   const handleSwipeLeft = () => {
     toast({
@@ -50,7 +57,6 @@ const Index = () => {
         setCurrentEventIndex(prev => prev + 1);
       }, 300);
     } else {
-      // No more events
       setTimeout(() => {
         toast({
           title: "That's all for now!",
@@ -71,74 +77,116 @@ const Index = () => {
     }
   };
 
-  const currentEvent = events[currentEventIndex];
   const hasMoreEvents = currentEventIndex < events.length - 1;
 
   return (
     <AppLayout activeTab="discover" onTabChange={handleTabChange}>
       <div className="p-4 space-y-6">
-        <div className="flex items-center justify-between">
-          <CategoryFilter 
-            selectedCategory={selectedCategory} 
-            onSelectCategory={handleCategorySelect}
-          />
+        <CategoryFilter 
+          selectedCategory={selectedCategory} 
+          onSelectCategory={handleCategorySelect}
+        />
+        
+        {mainEvent && (
+          <div className="my-6">
+            <h2 className="text-lg font-semibold mb-3">Featured Event</h2>
+            <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
+              <div className="relative w-full h-48">
+                <img 
+                  src={mainEvent.images[0]} 
+                  alt={mainEvent.title} 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 right-2">
+                  <Badge variant="secondary" className="bg-thrivvo-teal text-white">
+                    {mainEvent.category}
+                  </Badge>
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="text-xl font-semibold">{mainEvent.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{mainEvent.description}</p>
+                <div className="flex items-center mt-3 text-sm text-muted-foreground">
+                  <span>{new Date(mainEvent.time.start).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}</span>
+                  <span className="mx-2">•</span>
+                  <span>{mainEvent.location.name}</span>
+                </div>
+                <Button 
+                  className="w-full mt-3 bg-thrivvo-teal text-white"
+                  onClick={() => navigate(`/event/${mainEvent.id}`)}
+                >
+                  View Details
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-lg font-semibold">More Events</h2>
+            <div className="flex border rounded-md overflow-hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={viewMode === 'card' ? 'bg-muted' : ''}
+                onClick={() => setViewMode('card')}
+              >
+                <LayoutGrid size={18} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={viewMode === 'list' ? 'bg-muted' : ''}
+                onClick={() => setViewMode('list')}
+              >
+                <LayoutList size={18} />
+              </Button>
+            </div>
+          </div>
           
-          <div className="flex border rounded-md overflow-hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={viewMode === 'card' ? 'bg-muted' : ''}
-              onClick={() => setViewMode('card')}
-            >
-              <LayoutGrid size={18} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={viewMode === 'list' ? 'bg-muted' : ''}
-              onClick={() => setViewMode('list')}
-            >
-              <LayoutList size={18} />
-            </Button>
+          <div className="min-h-[200px]">
+            {events.length > 0 ? (
+              <>
+                {viewMode === 'card' ? (
+                  <div className="w-full mb-8">
+                    {events[currentEventIndex] && (
+                      <EventCard 
+                        event={events[currentEventIndex]} 
+                        onSwipeLeft={handleSwipeLeft} 
+                        onSwipeRight={handleSwipeRight} 
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-full">
+                    <EventList events={events} />
+                  </div>
+                )}
+                
+                {viewMode === 'card' && !hasMoreEvents && currentEventIndex === events.length - 1 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Last event in this category. Swipe to see a summary.
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="text-center p-8">
+                <h3 className="text-lg font-medium">No more events found</h3>
+                <p className="text-muted-foreground">
+                  Try selecting a different category or check back later
+                </p>
+              </div>
+            )}
           </div>
         </div>
         
-        <div className="min-h-[450px] flex flex-col items-center justify-center">
-          {events.length > 0 ? (
-            <>
-              {viewMode === 'card' ? (
-                <div className="w-full mb-8">
-                  {currentEvent && (
-                    <EventCard 
-                      event={currentEvent} 
-                      onSwipeLeft={handleSwipeLeft} 
-                      onSwipeRight={handleSwipeRight} 
-                    />
-                  )}
-                </div>
-              ) : (
-                <div className="w-full">
-                  <EventList events={events} />
-                </div>
-              )}
-              
-              {viewMode === 'card' && !hasMoreEvents && currentEventIndex === events.length - 1 && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  Last event in this category. Swipe to see a summary.
-                </p>
-              )}
-            </>
-          ) : (
-            <div className="text-center p-8">
-              <h3 className="text-lg font-medium">No events found</h3>
-              <p className="text-muted-foreground">
-                Try selecting a different category or check back later
-              </p>
-            </div>
-          )}
+        <div className="mt-8">
+          <UsersNearby users={mockUsers} />
         </div>
-        
-        <UsersNearby users={mockUsers} />
       </div>
     </AppLayout>
   );
