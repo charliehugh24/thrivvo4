@@ -9,6 +9,7 @@ import PartyEvents from "./pages/PartyEvents";
 import EventDetail from "./pages/EventDetail";
 import Search from "./pages/Search";
 import Notifications from "./pages/Notifications";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/event/:eventId" element={<EventDetail />} />
           <Route path="/search" element={<Search />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
