@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
-import { Home, MapPin, Clock, ArrowLeft, List } from 'lucide-react';
+import { Home, MapPin, Clock, List } from 'lucide-react';
 import EventList from '@/components/EventList';
 import { mockEvents } from '@/data/mockData';
 import CategoryFilter from '@/components/CategoryFilter';
@@ -39,21 +39,6 @@ const HouseParties = () => {
   return (
     <AppLayout activeTab="discover">
       <div className="p-4 space-y-6">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate('/')}
-            className="h-8 w-8"
-          >
-            <ArrowLeft size={18} />
-          </Button>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Home className="text-thrivvo-teal" size={24} />
-            House Parties
-          </h1>
-        </div>
-        
         {/* Category Filter */}
         <CategoryFilter 
           selectedCategory={selectedCategory} 
