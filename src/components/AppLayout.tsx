@@ -58,8 +58,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                 <SearchIcon size={20} />
               </Link>
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex-1 data-[state=active]:bg-thrivvo-teal data-[state=active]:text-white">
-              <BellIcon size={20} />
+            <TabsTrigger value="notifications" className="flex-1 data-[state=active]:bg-thrivvo-teal data-[state=active]:text-white" asChild>
+              <Link to="/notifications">
+                <BellIcon size={20} />
+              </Link>
             </TabsTrigger>
             <TabsTrigger value="profile" className="flex-1 data-[state=active]:bg-thrivvo-teal data-[state=active]:text-white">
               <UserIcon size={20} />

@@ -2,99 +2,138 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
-import { mockEvents } from '@/data/mockData';
-import { Event } from '@/types';
-import { SearchIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { SearchIcon, XIcon } from 'lucide-react';
+import { Event, EventCategory } from '@/types';
+import { mockEvents, eventCategories } from '@/data/mockData';
 
 const Search = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Event[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const navigate = useNavigate();
 
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    if (value.trim() === '') {
+  const handleSearch = () => {
+    if (!query.trim()) {
       setSearchResults([]);
+      setHasSearched(false);
       return;
     }
 
-    const filtered = mockEvents.filter(event => 
-      event.title.toLowerCase().includes(value.toLowerCase()) ||
-      event.description.toLowerCase().includes(value.toLowerCase()) ||
-      event.category.toLowerCase().includes(value.toLowerCase())
+    const results = mockEvents.filter(event => 
+      event.title.toLowerCase().includes(query.toLowerCase()) ||
+      event.description.toLowerCase().includes(query.toLowerCase()) ||
+      event.category.toLowerCase().includes(query.toLowerCase())
     );
     
-    setSearchResults(filtered);
+    setSearchResults(results);
+    setHasSearched(true);
   };
 
-  const handleSelectEvent = (eventId: string) => {
+  const handleClear = () => {
+    setQuery('');
+    setSearchResults([]);
+    setHasSearched(false);
+  };
+
+  const handleEventClick = (eventId: string) => {
     navigate(`/event/${eventId}`);
   };
 
+  const handleCategorySelect = (category: EventCategory) => {
+    setQuery(category);
+    const results = mockEvents.filter(event => 
+      event.category === category
+    );
+    setSearchResults(results);
+    setHasSearched(true);
+  };
+
   return (
-    <AppLayout activeTab="search" onTabChange={(value) => value !== "search" && navigate("/")}>
-      <div className="p-4 space-y-6">
-        <h1 className="text-2xl font-bold">Search Events</h1>
-        
-        <Command className="rounded-lg border shadow-md">
-          <div className="flex items-center border-b px-3">
-            <SearchIcon className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <CommandInput 
-              placeholder="Search events..." 
-              value={searchQuery}
-              onValueChange={handleSearch}
-              className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+    <AppLayout activeTab="search">
+      <div className="p-4">
+        <div className="flex gap-2 mb-6">
+          <div className="relative flex-1">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search events, people, places..."
+              className="pr-8"
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
-          </div>
-          
-          <CommandList>
-            {searchResults.length === 0 && searchQuery !== '' && (
-              <CommandEmpty>No results found.</CommandEmpty>
+            {query && (
+              <button 
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={handleClear}
+              >
+                <XIcon size={16} />
+              </button>
             )}
-            
-            {searchResults.length > 0 && (
-              <CommandGroup heading="Events">
-                {searchResults.map((event) => (
-                  <CommandItem 
-                    key={event.id}
-                    onSelect={() => handleSelectEvent(event.id)}
-                    className="cursor-pointer"
+          </div>
+          <Button onClick={handleSearch}>
+            <SearchIcon size={18} />
+          </Button>
+        </div>
+
+        {!hasSearched && (
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-3">Popular Categories</h2>
+            <div className="flex flex-wrap gap-2">
+              {eventCategories.map((category) => (
+                <Button 
+                  key={category.id}
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleCategorySelect(category.id)}
+                  className="flex items-center gap-1"
+                >
+                  <span>{category.icon}</span>
+                  <span>{category.name}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {hasSearched && (
+          <div>
+            <h2 className="text-lg font-semibold mb-3">
+              {searchResults.length} {searchResults.length === 1 ? 'Result' : 'Results'}
+            </h2>
+            <div className="space-y-4">
+              {searchResults.length > 0 ? (
+                searchResults.map((event) => (
+                  <div 
+                    key={event.id} 
+                    className="flex gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => handleEventClick(event.id)}
                   >
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 rounded bg-muted overflow-hidden mr-3">
-                        <img 
-                          src={event.image} 
-                          alt={event.title} 
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium">{event.title}</p>
-                        <p className="text-xs text-muted-foreground">{event.category}</p>
+                    <div className="w-16 h-16 rounded overflow-hidden flex-shrink-0">
+                      <img 
+                        src={event.images[0]} 
+                        alt={event.title} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium">{event.title}</h3>
+                      <p className="text-sm text-muted-foreground truncate">{event.description}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs px-2 py-0.5 bg-muted rounded-full">
+                          {event.category}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {event.location.distance} mi away
+                        </span>
                       </div>
                     </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-            
-            {searchQuery === '' && (
-              <div className="py-6 text-center">
-                <SearchIcon className="mx-auto h-6 w-6 text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Type to search for events
-                </p>
-              </div>
-            )}
-          </CommandList>
-        </Command>
-        
-        {searchResults.length > 0 && (
-          <div className="mt-4">
-            <h2 className="text-sm font-medium text-muted-foreground mb-2">
-              {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found
-            </h2>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-6">No results found for "{query}"</p>
+              )}
+            </div>
           </div>
         )}
       </div>
