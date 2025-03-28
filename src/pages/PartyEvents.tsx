@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
-import { PartyPopper, MapPin, Clock, ArrowLeft } from 'lucide-react';
+import { PartyPopper, MapPin, Clock, ArrowLeft, List } from 'lucide-react';
 
 const PartyEvents = () => {
   const navigate = useNavigate();
@@ -61,6 +61,14 @@ const PartyEvents = () => {
               <span className="text-sm">Events happening today and tomorrow</span>
             </div>
           </div>
+          
+          <Button 
+            className="w-full mt-3 bg-thrivvo-teal hover:bg-thrivvo-teal/90"
+            onClick={() => navigate('/house-parties')}
+          >
+            <List className="mr-2" size={16} />
+            View House Parties
+          </Button>
         </div>
         
         <Separator />

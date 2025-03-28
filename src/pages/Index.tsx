@@ -18,7 +18,7 @@ const Index = () => {
   // Handle category selection and navigate if it's "party"
   const handleCategorySelect = (category: EventCategory | null) => {
     if (category === 'party') {
-      navigate('/party-events');
+      navigate('/house-parties');
     } else {
       setSelectedCategory(category);
     }

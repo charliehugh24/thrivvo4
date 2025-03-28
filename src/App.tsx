@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import PartyEvents from "./pages/PartyEvents";
+import HouseParties from "./pages/HouseParties";
 import EventDetail from "./pages/EventDetail";
 import Search from "./pages/Search";
 import Notifications from "./pages/Notifications";
@@ -23,6 +24,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/party-events" element={<PartyEvents />} />
+          <Route path="/house-parties" element={<HouseParties />} />
           <Route path="/event/:eventId" element={<EventDetail />} />
           <Route path="/search" element={<Search />} />
           <Route path="/notifications" element={<Notifications />} />

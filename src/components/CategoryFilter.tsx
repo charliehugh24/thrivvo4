@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { eventCategories } from '@/data/mockData';
@@ -14,13 +15,23 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   selectedCategory, 
   onSelectCategory 
 }) => {
+  const navigate = useNavigate();
+  
+  const handleCategoryClick = (category: EventCategory | null) => {
+    if (category === 'party') {
+      navigate('/house-parties');
+    } else {
+      onSelectCategory(category);
+    }
+  };
+  
   return (
     <ScrollArea className="w-full whitespace-nowrap">
       <div className="flex gap-2 p-1">
         <Button
           variant={selectedCategory === null ? "default" : "outline"}
           className="flex items-center gap-1 rounded-full"
-          onClick={() => onSelectCategory(null)}
+          onClick={() => handleCategoryClick(null)}
         >
           <span className="text-lg">✨</span>
           <span>All</span>
@@ -31,7 +42,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
             key={category.id}
             variant={selectedCategory === category.id ? "default" : "outline"}
             className="flex items-center gap-1 rounded-full"
-            onClick={() => onSelectCategory(category.id)}
+            onClick={() => handleCategoryClick(category.id)}
           >
             <span className="text-lg">{category.icon}</span>
             <span>{category.name}</span>
