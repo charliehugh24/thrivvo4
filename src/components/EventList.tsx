@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon } from 'lucide-react';
+import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, CheckCircle, DollarSign } from 'lucide-react';
 import { Event } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface EventListProps {
   events: Event[];
@@ -41,17 +42,37 @@ const EventList: React.FC<EventListProps> = ({
                 alt={event.title} 
                 className="w-full h-full object-cover"
               />
-              {event.price && event.price.amount > 0 && (
-                <div className="absolute top-1 left-1">
+              <div className="absolute top-1 left-1 flex flex-col gap-1">
+                {(event.price && event.price.amount > 0) || event.monetized ? (
                   <Badge variant="secondary" className="bg-thrivvo-teal text-white">
-                    Premium
+                    <DollarSign size={12} className="mr-1" /> Premium
                   </Badge>
-                </div>
-              )}
+                ) : null}
+                
+                {event.isVerified && (
+                  <Badge variant="outline" className="bg-white/90 text-thrivvo-orange border-thrivvo-orange">
+                    <CheckCircle size={12} className="mr-1 text-thrivvo-orange" /> Verified
+                  </Badge>
+                )}
+              </div>
             </div>
             
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-base truncate">{event.title}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium text-base truncate">{event.title}</h3>
+                {event.isVerified && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <CheckCircle size={16} className="text-thrivvo-orange" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Verified event</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
               
               <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                 <CalendarIcon size={12} />
@@ -63,7 +84,7 @@ const EventList: React.FC<EventListProps> = ({
                 </span>
                 <ClockIcon size={12} className="ml-1" />
                 <span>
-                  {formatDistanceToNow(new Date(event.time.start))}
+                  {formatDistanceToNow(new Date(event.time.start), { addSuffix: true })}
                 </span>
               </div>
               

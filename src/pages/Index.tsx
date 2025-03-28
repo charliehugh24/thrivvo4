@@ -8,9 +8,10 @@ import UsersNearby from '@/components/UsersNearby';
 import { mockEvents, mockUsers } from '@/data/mockData';
 import { Event, EventCategory } from '@/types';
 import { toast } from '@/components/ui/use-toast';
-import { LayoutList, LayoutGrid } from 'lucide-react';
+import { LayoutList, LayoutGrid, CheckCircle, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -97,14 +98,40 @@ const Index = () => {
                   alt={mainEvent.title} 
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute top-2 right-2">
+                <div className="absolute top-2 right-2 flex flex-col gap-2">
                   <Badge variant="secondary" className="bg-thrivvo-teal text-white">
                     {mainEvent.category}
                   </Badge>
+                  
+                  {mainEvent.isVerified && (
+                    <Badge variant="outline" className="bg-white/80 text-thrivvo-orange border-thrivvo-orange">
+                      <CheckCircle size={12} className="mr-1" /> Verified
+                    </Badge>
+                  )}
+                  
+                  {(mainEvent.price && mainEvent.price.amount > 0) || mainEvent.monetized ? (
+                    <Badge variant="outline" className="bg-white/80 border-thrivvo-teal text-thrivvo-teal">
+                      <DollarSign size={12} className="mr-1" /> Premium
+                    </Badge>
+                  ) : null}
                 </div>
               </div>
               <div className="p-4">
-                <h3 className="text-xl font-semibold">{mainEvent.title}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-semibold">{mainEvent.title}</h3>
+                  {mainEvent.isVerified && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <CheckCircle size={18} className="text-thrivvo-orange" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This event has been verified by our team</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{mainEvent.description}</p>
                 <div className="flex items-center mt-3 text-sm text-muted-foreground">
                   <span>{new Date(mainEvent.time.start).toLocaleDateString('en-US', { 
@@ -185,6 +212,7 @@ const Index = () => {
         </div>
         
         <div className="mt-8">
+          <h2 className="text-lg font-semibold mb-3">Connect with Others</h2>
           <UsersNearby users={mockUsers} />
         </div>
       </div>

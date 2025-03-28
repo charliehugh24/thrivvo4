@@ -10,7 +10,11 @@ import { toast } from '@/components/ui/use-toast';
 import { Event } from '@/types';
 import { mockEvents } from '@/data/mockData';
 import { formatDistanceToNow, format } from 'date-fns';
-import { ArrowLeft, MapPin, Clock, Users, DollarSign, CalendarIcon, Share2, Heart } from 'lucide-react';
+import { 
+  ArrowLeft, MapPin, Clock, Users, DollarSign, 
+  CalendarIcon, Share2, Heart, CheckCircle, Shield 
+} from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const EventDetail = () => {
   const { eventId } = useParams();
@@ -109,15 +113,42 @@ const EventDetail = () => {
           <div className="p-4 space-y-4">
             {/* Title and category */}
             <div>
-              <div className="flex justify-between">
+              <div className="flex justify-between flex-wrap gap-2">
                 <Badge className="mb-2">{event.category}</Badge>
                 {isStartingSoon && (
                   <Badge className="bg-thrivvo-orange text-white border-0">
                     Starting Soon!
                   </Badge>
                 )}
+                {event.isVerified && (
+                  <Badge className="bg-white border-thrivvo-orange text-thrivvo-orange mb-2">
+                    <CheckCircle size={14} className="mr-1" /> Verified
+                  </Badge>
+                )}
+                {(event.price && event.price.amount > 0) || event.monetized ? (
+                  <Badge className="bg-white border-thrivvo-teal text-thrivvo-teal mb-2">
+                    <DollarSign size={14} className="mr-1" /> Premium
+                  </Badge>
+                ) : null}
               </div>
-              <h1 className="text-2xl font-bold">{event.title}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold">{event.title}</h1>
+                {event.isVerified && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <CheckCircle size={20} className="text-thrivvo-orange" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="text-sm">
+                          <p className="font-semibold">Verified Event</p>
+                          <p>This event has been confirmed as authentic by our team</p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
               <div className="flex items-center text-muted-foreground mt-1">
                 <Clock size={14} className="mr-1" />
                 <span>{timeUntil}</span>
@@ -130,13 +161,45 @@ const EventDetail = () => {
                 <AvatarImage src={event.host.avatar} />
                 <AvatarFallback>{event.host.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div>
-                <div className="font-medium">{event.host.name}</div>
-                <div className="text-sm text-muted-foreground">Host</div>
+              <div className="flex items-center">
+                <div>
+                  <div className="font-medium">{event.host.name}</div>
+                  <div className="text-sm text-muted-foreground">Host</div>
+                </div>
+                {event.host.verified && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Shield className="ml-2 h-4 w-4 text-thrivvo-teal" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Verified Host</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
             </div>
 
             <Separator />
+
+            {/* Verification info - new section */}
+            {event.isVerified && (
+              <>
+                <div className="bg-muted/30 p-3 rounded-md border border-muted flex items-start gap-3">
+                  <div className="bg-thrivvo-orange/10 p-2 rounded-full">
+                    <CheckCircle size={18} className="text-thrivvo-orange" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Verified Event</h3>
+                    <p className="text-sm text-muted-foreground">
+                      This event has been reviewed and confirmed by our trust & safety team, ensuring it's legitimate and as described.
+                    </p>
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
 
             {/* Date, time, location */}
             <div className="space-y-3">

@@ -42,6 +42,8 @@ export interface Event {
   images: string[];
   vibe: string[];
   isPrivate: boolean;
+  isVerified?: boolean; // New field for event verification
+  monetized?: boolean; // New field to explicitly track if the event is monetized
 }
 
 export interface User {
