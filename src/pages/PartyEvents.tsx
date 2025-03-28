@@ -7,9 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
 import { PartyPopper, MapPin, Clock, ArrowLeft, List } from 'lucide-react';
+import EventList from '@/components/EventList';
+import { mockEvents } from '@/data/mockData';
 
 const PartyEvents = () => {
   const navigate = useNavigate();
+  
+  // Filter only party events
+  const partyEvents = mockEvents.filter(event => event.category === 'party');
   
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,39 +42,19 @@ const PartyEvents = () => {
           </h1>
         </div>
         
-        <div className="aspect-video bg-muted rounded-xl overflow-hidden">
-          <img 
-            src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9" 
-            alt="Party event" 
-            className="w-full h-full object-cover"
-          />
+        {/* Party Events List */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Upcoming Party Events</h2>
+          <EventList events={partyEvents} emptyMessage="No party events found" />
         </div>
         
-        <div className="space-y-3">
-          <h2 className="text-xl font-semibold">Don't Miss The Party</h2>
-          <p className="text-muted-foreground">
-            Discover the most exciting last-minute parties happening near you. From house parties to club nights, we've got you covered with real-time updates and instant RSVPs.
-          </p>
-          
-          <div className="flex flex-col gap-1.5 mt-3">
-            <div className="flex items-center gap-2">
-              <MapPin size={16} className="text-muted-foreground" />
-              <span className="text-sm">Venues within 15 miles of your location</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock size={16} className="text-muted-foreground" />
-              <span className="text-sm">Events happening today and tomorrow</span>
-            </div>
-          </div>
-          
-          <Button 
-            className="w-full mt-3 bg-thrivvo-teal hover:bg-thrivvo-teal/90"
-            onClick={() => navigate('/house-parties')}
-          >
-            <List className="mr-2" size={16} />
-            View House Parties
-          </Button>
-        </div>
+        <Button 
+          className="w-full bg-thrivvo-teal hover:bg-thrivvo-teal/90"
+          onClick={() => navigate('/house-parties')}
+        >
+          <List className="mr-2" size={16} />
+          View House Parties
+        </Button>
         
         <Separator />
         
