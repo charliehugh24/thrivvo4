@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				thrivvo: {
+					purple: '#9b87f5',
+					'deep-purple': '#7E69AB',
+					teal: '#0EA5E9',
+					orange: '#F97316',
+					'light-purple': '#E5DEFF',
+					'light-orange': '#FDE1D3',
+					'light-teal': '#D3E4FD',
 				}
 			},
 			borderRadius: {
@@ -84,11 +94,26 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'swipe-right': {
+					'0%': { transform: 'translateX(0) rotate(0)', opacity: '1' },
+					'100%': { transform: 'translateX(200px) rotate(20deg)', opacity: '0' }
+				},
+				'swipe-left': {
+					'0%': { transform: 'translateX(0) rotate(0)', opacity: '1' },
+					'100%': { transform: 'translateX(-200px) rotate(-20deg)', opacity: '0' }
+				},
+				'fade-in': {
+					'0%': { opacity: '0' },
+					'100%': { opacity: '1' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'swipe-right': 'swipe-right 0.5s forwards',
+				'swipe-left': 'swipe-left 0.5s forwards',
+				'fade-in': 'fade-in 0.5s ease-out'
 			}
 		}
 	},
