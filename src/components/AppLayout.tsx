@@ -27,7 +27,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             />
           </div>
           
-          <h1 className="text-xl font-bold text-thrivvo-teal absolute left-1/2 transform -translate-x-1/2">
+          <h1 className="text-xl font-bold text-thrivvo-orange absolute left-1/2 transform -translate-x-1/2">
             Thrivvo
             <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded ml-1">beta</span>
           </h1>
