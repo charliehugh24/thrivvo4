@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import EventCard from '@/components/EventCard';
 import CategoryFilter from '@/components/CategoryFilter';
-import EventDetailDialog from '@/components/EventDetailDialog';
 import UsersNearby from '@/components/UsersNearby';
 import { mockEvents, mockUsers } from '@/data/mockData';
 import { Event, EventCategory } from '@/types';
@@ -15,8 +14,6 @@ const Index = () => {
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // Handle category selection and navigate if it's "party"
   const handleCategorySelect = (category: EventCategory | null) => {
@@ -60,9 +57,8 @@ const Index = () => {
   };
 
   const handleSwipeRight = () => {
-    const event = events[currentEventIndex];
-    setSelectedEvent(event);
-    setIsDialogOpen(true);
+    // We don't need to do anything here since the navigation happens in EventCard
+    // Just leave this as a callback for the EventCard component
   };
 
   const currentEvent = events[currentEventIndex];
@@ -107,12 +103,6 @@ const Index = () => {
         
         <UsersNearby users={mockUsers} />
       </div>
-      
-      <EventDetailDialog 
-        event={selectedEvent} 
-        open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen} 
-      />
     </AppLayout>
   );
 };

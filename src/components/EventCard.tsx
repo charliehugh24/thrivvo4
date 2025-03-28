@@ -1,5 +1,6 @@
 
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Event } from '../types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,6 +15,7 @@ interface EventCardProps {
 }
 
 const EventCard: React.FC<EventCardProps> = ({ event, onSwipeLeft, onSwipeRight }) => {
+  const navigate = useNavigate();
   const [startX, setStartX] = useState<number | null>(null);
   const [currentX, setCurrentX] = useState<number | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
@@ -38,7 +40,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, onSwipeLeft, onSwipeRight 
     if (Math.abs(deltaX) > 100) {
       if (deltaX > 0) {
         setSwipeDirection('right');
-        onSwipeRight();
+        
+        // Navigate to event detail page instead of opening dialog
+        setTimeout(() => {
+          onSwipeRight(); // Call the original handler for any cleanup needed
+          navigate(`/event/${event.id}`);
+        }, 300);
       } else {
         setSwipeDirection('left');
         onSwipeLeft();
