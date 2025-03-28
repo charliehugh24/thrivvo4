@@ -37,11 +37,11 @@ const EventList: React.FC<EventListProps> = ({
           <div className="flex gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
             <div className="relative w-24 h-24 rounded-md overflow-hidden shrink-0">
               <img 
-                src={event.image} 
+                src={event.images[0]} 
                 alt={event.title} 
                 className="w-full h-full object-cover"
               />
-              {event.isPremium && (
+              {event.price && event.price.amount > 0 && (
                 <div className="absolute top-1 left-1">
                   <Badge variant="secondary" className="bg-thrivvo-teal text-white">
                     Premium
@@ -56,23 +56,25 @@ const EventList: React.FC<EventListProps> = ({
               <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                 <CalendarIcon size={12} />
                 <span>
-                  {new Date(event.date).toLocaleDateString('en-US', { 
+                  {new Date(event.time.start).toLocaleDateString('en-US', { 
                     month: 'short', 
                     day: 'numeric' 
                   })}
                 </span>
                 <ClockIcon size={12} className="ml-1" />
-                <span>{formatDistanceToNow(new Date(event.date))}</span>
+                <span>
+                  {formatDistanceToNow(new Date(event.time.start))}
+                </span>
               </div>
               
               <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                 <MapPinIcon size={12} />
-                <span className="truncate">{event.location}</span>
+                <span className="truncate">{event.location.name}</span>
               </div>
               
               <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                 <UserIcon size={12} />
-                <span>{event.attendees} attending</span>
+                <span>{event.attendees.count} attending</span>
               </div>
             </div>
           </div>
