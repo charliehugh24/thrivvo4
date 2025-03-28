@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { EventCard } from '@/components/EventCard';
+import EventCard from '@/components/EventCard'; // Fixed: Changed from named import to default import
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Edit, Save, Calendar } from 'lucide-react';
@@ -57,6 +57,17 @@ const Profile = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Handle swipe actions for the EventCard component
+  const handleSwipeLeft = () => {
+    // For now, just a placeholder for the swipe left action
+    console.log("Swiped left on event");
+  };
+
+  const handleSwipeRight = () => {
+    // For now, just a placeholder for the swipe right action
+    console.log("Swiped right on event");
   };
 
   return (
@@ -231,8 +242,9 @@ const Profile = () => {
               {mockEvents.slice(0, 3).map((event: Event) => (
                 <EventCard 
                   key={event.id} 
-                  event={event} 
-                  onView={() => navigate(`/event/${event.id}`)}
+                  event={event}
+                  onSwipeLeft={handleSwipeLeft}
+                  onSwipeRight={handleSwipeRight}
                 />
               ))}
             </div>
