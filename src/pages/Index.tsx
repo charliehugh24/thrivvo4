@@ -61,11 +61,17 @@ const Index = () => {
     // Just leave this as a callback for the EventCard component
   };
 
+  const handleTabChange = (value: string) => {
+    if (value === "search") {
+      navigate("/search");
+    }
+  };
+
   const currentEvent = events[currentEventIndex];
   const hasMoreEvents = currentEventIndex < events.length - 1;
 
   return (
-    <AppLayout>
+    <AppLayout activeTab="discover" onTabChange={handleTabChange}>
       <div className="p-4 space-y-6">
         <CategoryFilter 
           selectedCategory={selectedCategory} 
