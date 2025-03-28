@@ -9,7 +9,6 @@ import { toast } from '@/components/ui/use-toast';
 import { Home, MapPin, Clock, ArrowLeft, List } from 'lucide-react';
 import EventList from '@/components/EventList';
 import { mockEvents } from '@/data/mockData';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const HouseParties = () => {
   const navigate = useNavigate();
@@ -26,18 +25,6 @@ const HouseParties = () => {
       title: "You're all set!",
       description: "Thanks for signing up for house parties notifications!",
     });
-  };
-
-  const handleTabChange = (value: string) => {
-    if (value === "house-parties") {
-      navigate('/house-parties');
-    } else if (value === "night-clubs") {
-      navigate('/party-events'); // We'll use party events for now
-    } else if (value === "bars") {
-      navigate('/party-events'); // We'll use party events for now  
-    } else if (value === "hangouts") {
-      navigate('/party-events'); // We'll use party events for now
-    }
   };
   
   return (
@@ -57,24 +44,6 @@ const HouseParties = () => {
             House Parties
           </h1>
         </div>
-
-        {/* Event Type Navigation Tabs */}
-        <Tabs defaultValue="house-parties" onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full">
-            <TabsTrigger value="house-parties" className="flex-1">
-              House Parties
-            </TabsTrigger>
-            <TabsTrigger value="night-clubs" className="flex-1">
-              Night Clubs
-            </TabsTrigger>
-            <TabsTrigger value="bars" className="flex-1">
-              Bars
-            </TabsTrigger>
-            <TabsTrigger value="hangouts" className="flex-1">
-              Hangouts
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
         
         {/* House Party Events List */}
         <div className="space-y-4">
