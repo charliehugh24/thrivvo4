@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -9,15 +9,20 @@ import { toast } from '@/components/ui/use-toast';
 import { Home, MapPin, Clock, ArrowLeft, List } from 'lucide-react';
 import EventList from '@/components/EventList';
 import { mockEvents } from '@/data/mockData';
+import CategoryFilter from '@/components/CategoryFilter';
+import { EventCategory } from '@/types';
 
 const HouseParties = () => {
   const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>('party');
   
-  // Filter only house party events
-  const housePartyEvents = mockEvents.filter(event => 
-    event.title.toLowerCase().includes('house') || 
-    event.description.toLowerCase().includes('house party')
-  );
+  // Filter events based on selected category or default to house parties
+  const filteredEvents = selectedCategory 
+    ? mockEvents.filter(event => event.category === selectedCategory)
+    : mockEvents.filter(event => 
+        event.title.toLowerCase().includes('house') || 
+        event.description.toLowerCase().includes('house party')
+      );
   
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +30,10 @@ const HouseParties = () => {
       title: "You're all set!",
       description: "Thanks for signing up for house parties notifications!",
     });
+  };
+
+  const handleCategorySelect = (category: EventCategory | null) => {
+    setSelectedCategory(category);
   };
   
   return (
@@ -45,12 +54,20 @@ const HouseParties = () => {
           </h1>
         </div>
         
-        {/* House Party Events List */}
+        {/* Category Filter */}
+        <CategoryFilter 
+          selectedCategory={selectedCategory} 
+          onSelectCategory={handleCategorySelect} 
+        />
+        
+        {/* Events List */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Upcoming House Parties</h2>
+          <h2 className="text-lg font-semibold">
+            {selectedCategory ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Events` : 'House Party Events'}
+          </h2>
           <EventList 
-            events={housePartyEvents} 
-            emptyMessage="No house parties found nearby" 
+            events={filteredEvents} 
+            emptyMessage={`No ${selectedCategory || 'house party'} events found nearby`} 
           />
         </div>
         
