@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; 
 import AppLayout from '@/components/AppLayout';
 import EventCard from '@/components/EventCard';
 import CategoryFilter from '@/components/CategoryFilter';
@@ -10,11 +11,21 @@ import { Event, EventCategory } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 
 const Index = () => {
+  const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Handle category selection and navigate if it's "party"
+  const handleCategorySelect = (category: EventCategory | null) => {
+    if (category === 'party') {
+      navigate('/party-events');
+    } else {
+      setSelectedCategory(category);
+    }
+  };
   
   // Filter events based on selected category
   useEffect(() => {
@@ -62,7 +73,7 @@ const Index = () => {
       <div className="p-4 space-y-6">
         <CategoryFilter 
           selectedCategory={selectedCategory} 
-          onSelectCategory={setSelectedCategory} 
+          onSelectCategory={handleCategorySelect}
         />
         
         <div className="min-h-[450px] flex flex-col items-center justify-center">
