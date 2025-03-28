@@ -18,12 +18,18 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     <div className="flex flex-col min-h-screen max-w-lg mx-auto">
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
         <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-1">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-thrivvo-purple to-thrivvo-teal text-transparent bg-clip-text">
-              Thrivvo
-            </h1>
-            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">beta</span>
+          <div className="w-8 h-8">
+            <img 
+              src="/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png" 
+              alt="Thrivvo Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
+          
+          <h1 className="text-xl font-bold bg-gradient-to-r from-thrivvo-purple to-thrivvo-teal text-transparent bg-clip-text absolute left-1/2 transform -translate-x-1/2">
+            Thrivvo
+            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded ml-1">beta</span>
+          </h1>
           
           <div className="flex items-center gap-2">
             <button className="flex items-center text-sm text-muted-foreground gap-1 bg-muted px-2 py-1 rounded-full">
