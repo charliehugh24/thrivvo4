@@ -23,7 +23,7 @@ const HouseParties = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate('/party-events')}
+            onClick={() => navigate('/')}
             className="h-8 w-8"
           >
             <ArrowLeft size={18} />
