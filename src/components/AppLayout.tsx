@@ -21,7 +21,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         <div className="flex items-center justify-between p-4">
           <div className="w-8 h-8">
             <img 
-              src="/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png" 
+              src="/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png" 
               alt="Thrivvo Logo" 
               className="w-full h-full object-contain"
             />
