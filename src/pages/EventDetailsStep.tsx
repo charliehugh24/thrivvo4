@@ -5,7 +5,7 @@ import AppLayout from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, MapPin, Navigation } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
@@ -36,6 +36,7 @@ const EventDetailsStep = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [filteredLocations, setFilteredLocations] = useState<string[]>(locationSuggestions);
+  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     // Load saved data from session storage
@@ -94,6 +95,60 @@ const EventDetailsStep = () => {
     setOpen(false);
   };
 
+  const getCurrentLocation = () => {
+    setIsLocating(true);
+    if (!navigator.geolocation) {
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser doesn't support geolocation",
+        variant: "destructive",
+      });
+      setIsLocating(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          // In a real app, this would call a reverse geocoding API
+          // For now, we'll just set coordinates
+          const { latitude, longitude } = position.coords;
+          const locationString = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          
+          // Set the location in state
+          handleLocationSelect(locationString);
+          
+          toast({
+            title: "Location detected",
+            description: "Your current location has been set",
+          });
+        } catch (error) {
+          toast({
+            title: "Location error",
+            description: "Could not determine your location",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        let errorMessage = "Could not determine your location";
+        if (error.code === 1) {
+          errorMessage = "Location permission denied";
+        }
+        toast({
+          title: "Location error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  };
+
   return (
     <AppLayout activeTab="add">
       <div className="p-4 space-y-6">
@@ -124,10 +179,20 @@ const EventDetailsStep = () => {
                   <Input 
                     placeholder="Event location" 
                     value={eventData.location}
-                    className="pl-9"
+                    className="pl-9 pr-10"
                     onChange={(e) => handleChange('location', e.target.value)}
                     onFocus={() => setOpen(true)}
                   />
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
+                    onClick={getCurrentLocation}
+                    disabled={isLocating}
+                  >
+                    <Navigation className={`h-4 w-4 ${isLocating ? 'animate-pulse text-primary' : ''}`} />
+                  </Button>
                 </div>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="start">
