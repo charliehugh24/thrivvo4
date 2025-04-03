@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -6,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, MapPin, Navigation, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface LocationResult {
   id: string;
@@ -25,10 +25,11 @@ const EventDetailsStep = () => {
     date: ''
   });
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [locationResults, setLocationResults] = useState<LocationResult[]>([]);
   const [isLocating, setIsLocating] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
 
   useEffect(() => {
     const savedData = sessionStorage.getItem('newEventData');
@@ -44,57 +45,25 @@ const EventDetailsStep = () => {
 
   useEffect(() => {
     const searchLocations = async () => {
-      if (!eventData.location || eventData.location.trim().length < 2) {
-        setLocationResults([]);
+      // Only search if there's input and the field is focused
+      if (!eventData.location || eventData.location.trim().length < 2 || !inputFocused) {
+        if (!inputFocused) setIsSearchOpen(false);
         return;
       }
 
       setIsSearching(true);
+      setIsSearchOpen(true);
 
       try {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         const query = eventData.location.toLowerCase();
         
-        const mockResults: LocationResult[] = [];
+        // Generate realistic location suggestions based on input
+        const mockResults: LocationResult[] = generateWorldwideAddresses(query);
         
-        if (query.length > 1) {
-          const streetTypes = ['Street', 'Avenue', 'Boulevard', 'Road', 'Lane', 'Drive'];
-          const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia'];
-          const states = ['NY', 'CA', 'IL', 'TX', 'AZ', 'PA'];
-          
-          for (let i = 0; i < 5; i++) {
-            const streetType = streetTypes[i % streetTypes.length];
-            const city = cities[i % cities.length];
-            const state = states[i % states.length];
-            const streetNumber = Math.floor(Math.random() * 1000) + 1;
-            
-            mockResults.push({
-              id: `${i}`,
-              name: `${query.charAt(0).toUpperCase() + query.slice(1)} ${streetType}`,
-              address: `${streetNumber} ${query.charAt(0).toUpperCase() + query.slice(1)} ${streetType}, ${city}, ${state}`,
-              placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-            });
-          }
-          
-          if (query.length > 2) {
-            mockResults.push({
-              id: '5',
-              name: `${query.charAt(0).toUpperCase() + query.slice(1)} Mall`,
-              address: `${query.charAt(0).toUpperCase() + query.slice(1)} Mall, 1000 Shopping Center Dr, Boston, MA`,
-              placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-            });
-            
-            mockResults.push({
-              id: '6',
-              name: `${query.charAt(0).toUpperCase() + query.slice(1)} Park`,
-              address: `${query.charAt(0).toUpperCase() + query.slice(1)} Park, 200 Park Ave, San Francisco, CA`,
-              placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-            });
-          }
-        }
-        
-        if (query.includes(' ') || query.length > 10) {
+        // Add "Use as entered" option for convenience
+        if (query.length > 2) {
           mockResults.unshift({
             id: 'custom',
             name: `Use "${eventData.location}"`,
@@ -122,7 +91,71 @@ const EventDetailsStep = () => {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [eventData.location, toast]);
+  }, [eventData.location, toast, inputFocused]);
+
+  // Generate worldwide address suggestions based on user input
+  const generateWorldwideAddresses = (query: string): LocationResult[] => {
+    const results: LocationResult[] = [];
+    
+    // Generate addresses in different formats for different regions
+    // North America style
+    results.push({
+      id: `na-${Math.random().toString(36).substring(2, 10)}`,
+      name: `${query.charAt(0).toUpperCase() + query.slice(1)} Street`,
+      address: `123 ${query.charAt(0).toUpperCase() + query.slice(1)} St, New York, NY 10001, USA`,
+      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+    });
+    
+    // European style
+    results.push({
+      id: `eu-${Math.random().toString(36).substring(2, 10)}`,
+      name: `${query.charAt(0).toUpperCase() + query.slice(1)}straße`,
+      address: `${query.charAt(0).toUpperCase() + query.slice(1)}straße 42, 10115 Berlin, Germany`,
+      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+    });
+    
+    // UK style
+    results.push({
+      id: `uk-${Math.random().toString(36).substring(2, 10)}`,
+      name: `${query.charAt(0).toUpperCase() + query.slice(1)} Road`,
+      address: `45 ${query.charAt(0).toUpperCase() + query.slice(1)} Road, London SW1A 1AA, UK`,
+      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+    });
+    
+    // Asian style
+    results.push({
+      id: `as-${Math.random().toString(36).substring(2, 10)}`,
+      name: `${query.charAt(0).toUpperCase() + query.slice(1)} Street`,
+      address: `Block 123, ${query.charAt(0).toUpperCase() + query.slice(1)} Street, Tokyo 100-0001, Japan`,
+      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+    });
+    
+    // Latin American style
+    results.push({
+      id: `la-${Math.random().toString(36).substring(2, 10)}`,
+      name: `Calle ${query.charAt(0).toUpperCase() + query.slice(1)}`,
+      address: `Calle ${query.charAt(0).toUpperCase() + query.slice(1)} #123, Col. Centro, Mexico City 06000, Mexico`,
+      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+    });
+    
+    // African style
+    results.push({
+      id: `af-${Math.random().toString(36).substring(2, 10)}`,
+      name: `${query.charAt(0).toUpperCase() + query.slice(1)} Avenue`,
+      address: `${query.charAt(0).toUpperCase() + query.slice(1)} Avenue, Nairobi 00100, Kenya`,
+      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+    });
+    
+    // Add a POI (Point of Interest)
+    results.push({
+      id: `poi-${Math.random().toString(36).substring(2, 10)}`,
+      name: `${query.charAt(0).toUpperCase() + query.slice(1)} Mall`,
+      address: `${query.charAt(0).toUpperCase() + query.slice(1)} Shopping Center, 888 Market St, Sydney NSW 2000, Australia`,
+      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+    });
+    
+    return results;
+  };
 
   const handleBack = () => {
     navigate(`/add-event/name?type=${eventData.type}`);
@@ -148,7 +181,8 @@ const EventDetailsStep = () => {
 
   const handleLocationSelect = (location: LocationResult) => {
     setEventData(prev => ({ ...prev, location: location.address }));
-    setOpen(false);
+    setIsSearchOpen(false);
+    setInputFocused(false);
   };
 
   const getCurrentLocation = () => {
@@ -170,10 +204,16 @@ const EventDetailsStep = () => {
           
           await new Promise(resolve => setTimeout(resolve, 800));
           
-          const mockAddress = `${Math.floor(Math.random() * 1000) + 1} Main Street, ${
-            ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'][Math.floor(Math.random() * 5)]
+          // Simulate reverse geocoding with worldwide addresses
+          const countries = ['USA', 'UK', 'Germany', 'Japan', 'Australia', 'Brazil', 'Canada', 'India', 'South Africa'];
+          const cities = ['New York', 'London', 'Berlin', 'Tokyo', 'Sydney', 'São Paulo', 'Toronto', 'Mumbai', 'Cape Town'];
+          const streets = ['Main St', 'High Street', 'Hauptstraße', '中央通り', 'Market Street', 'Avenida Paulista', 'Queen Street', 'MG Road', 'Long Street'];
+          
+          const randomIndex = Math.floor(Math.random() * countries.length);
+          const mockAddress = `${Math.floor(Math.random() * 1000) + 1} ${streets[randomIndex]}, ${
+            cities[randomIndex]
           }, ${
-            ['NY', 'CA', 'IL', 'TX', 'AZ'][Math.floor(Math.random() * 5)]
+            countries[randomIndex]
           } ${Math.floor(Math.random() * 90000) + 10000}`;
           
           setEventData(prev => ({ ...prev, location: mockAddress }));
@@ -235,14 +275,21 @@ const EventDetailsStep = () => {
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Type your address or location name" 
+                placeholder="Type any address worldwide" 
                 value={eventData.location}
                 className="pl-9 pr-10"
                 onChange={(e) => {
                   handleChange('location', e.target.value);
-                  setOpen(e.target.value.length > 1);
                 }}
-                onFocus={() => setOpen(eventData.location.length > 1)}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => {
+                  // Small delay to allow click on suggestions
+                  setTimeout(() => {
+                    if (!document.activeElement?.closest('.location-results')) {
+                      setInputFocused(false);
+                    }
+                  }, 200);
+                }}
               />
               <Button 
                 type="button" 
@@ -260,22 +307,24 @@ const EventDetailsStep = () => {
               </Button>
             </div>
             
-            {open && eventData.location.length > 1 && (
-              <div className="relative z-50">
+            {/* Location search results dropdown */}
+            {isSearchOpen && eventData.location.length > 1 && (
+              <div className="relative z-50 location-results">
                 <div className="absolute w-full rounded-md border bg-popover shadow-md outline-none animate-in fade-in-0 zoom-in-95">
                   <div className="overflow-hidden bg-popover rounded-md">
                     {isSearching ? (
                       <div className="p-4 text-center">
                         <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
-                        <p className="text-sm text-muted-foreground">Searching locations...</p>
+                        <p className="text-sm text-muted-foreground">Searching locations worldwide...</p>
                       </div>
                     ) : (
-                      <div className="p-1">
+                      <div className="p-1 max-h-64 overflow-y-auto">
                         {locationResults && locationResults.length > 0 ? (
                           <div>
                             {locationResults.map((location) => (
                               <div
                                 key={location.id}
+                                onMouseDown={(e) => e.preventDefault()} // Prevent blur from canceling the click
                                 onClick={() => handleLocationSelect(location)}
                                 className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
                               >
@@ -293,7 +342,7 @@ const EventDetailsStep = () => {
                           </div>
                         ) : (
                           <div className="p-4 text-center">
-                            <p className="text-sm text-muted-foreground">Type your address to search for locations</p>
+                            <p className="text-sm text-muted-foreground">Type any address worldwide</p>
                           </div>
                         )}
                       </div>
@@ -304,7 +353,7 @@ const EventDetailsStep = () => {
             )}
             
             <p className="text-xs text-muted-foreground">
-              Enter a full address or use your current location
+              Enter any address worldwide or use your current location
             </p>
           </div>
 
