@@ -122,7 +122,8 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         }
 
         setLocationResults(results);
-        setIsSearchOpen(results.length > 0);
+        // Only open the popover if we have results AND the input is focused
+        setIsSearchOpen(results.length > 0 && document.activeElement === document.querySelector('input[placeholder="Enter any address worldwide"]'));
       } catch (error) {
         console.error("Error searching for locations:", error);
         toast({
@@ -232,6 +233,22 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     setIsSearchOpen(false);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchText(value);
+    // Update the parent component with the current text
+    // This ensures the value is saved even if a suggestion isn't selected
+    onLocationChange(value);
+  };
+
+  const handleInputBlur = () => {
+    // Give a small delay before closing the popover
+    // to allow for clicking on a suggestion
+    setTimeout(() => {
+      setIsSearchOpen(false);
+    }, 200);
+  };
+
   const getCurrentLocation = () => {
     setIsLocating(true);
     if (!navigator.geolocation) {
@@ -299,17 +316,13 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
               placeholder="Enter any address worldwide" 
               value={searchText} 
               className="pl-9 pr-10" 
-              onChange={e => {
-                setSearchText(e.target.value);
-                if (e.target.value.trim() === '') {
-                  onLocationChange('');
-                }
-              }} 
-              onClick={() => {
-                if (searchText && locationResults.length > 0) {
+              onChange={handleInputChange}
+              onFocus={() => {
+                if (locationResults.length > 0) {
                   setIsSearchOpen(true);
                 }
               }}
+              onBlur={handleInputBlur}
             />
             <Button 
               type="button" 
@@ -323,7 +336,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
             </Button>
           </div>
         </PopoverTrigger>
-        <PopoverContent className="p-0 w-[calc(100vw-2rem)] max-w-lg" align="start">
+        <PopoverContent className="p-0 w-[calc(100vw-2rem)] max-w-lg" align="start" sideOffset={5}>
           {isSearching ? (
             <div className="p-4 text-center">
               <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
