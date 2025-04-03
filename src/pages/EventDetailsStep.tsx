@@ -85,7 +85,7 @@ const EventDetailsStep = () => {
               <SelectContent>
                 {eventCategories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
-                    {category.icon} {category.name}
+                    {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>

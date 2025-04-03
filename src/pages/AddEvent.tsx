@@ -3,7 +3,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { MusicIcon, Mic, Users, PartyPopper } from 'lucide-react';
 
 const AddEvent = () => {
@@ -37,8 +36,8 @@ const AddEvent = () => {
   ];
 
   const handleSelectEventType = (eventType: string) => {
-    // Navigate to the next step with the selected event type
-    navigate(`/add-event/details?type=${eventType}`);
+    // Navigate to the name step with the selected event type
+    navigate(`/add-event/name?type=${eventType}`);
   };
 
   return (
