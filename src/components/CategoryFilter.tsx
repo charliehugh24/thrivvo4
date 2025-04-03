@@ -27,6 +27,9 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
         // If we're already on the house-parties page, just update the filter
         onSelectCategory(category);
       }
+    } else if (category === null && location.pathname !== '/') {
+      // When "All" is clicked and not on home page, navigate to home page
+      navigate('/');
     } else {
       onSelectCategory(category);
     }

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -16,13 +15,10 @@ const HouseParties = () => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>('party');
   
-  // Filter events based on selected category or default to house parties
+  // Filter events based on selected category
   const filteredEvents = selectedCategory 
     ? mockEvents.filter(event => event.category === selectedCategory)
-    : mockEvents.filter(event => 
-        event.title.toLowerCase().includes('house') || 
-        event.description.toLowerCase().includes('house party')
-      );
+    : mockEvents;
   
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,11 +44,11 @@ const HouseParties = () => {
         {/* Events List */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">
-            {selectedCategory ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Events` : 'House Party Events'}
+            {selectedCategory ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Events` : 'All Events'}
           </h2>
           <EventList 
             events={filteredEvents} 
-            emptyMessage={`No ${selectedCategory || 'house party'} events found nearby`} 
+            emptyMessage={`No ${selectedCategory || 'events'} found nearby`} 
           />
         </div>
         
