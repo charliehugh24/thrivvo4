@@ -172,7 +172,7 @@ const EventDetailsStep = () => {
 
           <div className="space-y-2">
             <label className="block text-sm font-medium">Location</label>
-            <Popover open={open && filteredLocations.length > 0} onOpenChange={setOpen}>
+            <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
