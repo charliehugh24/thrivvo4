@@ -1,7 +1,7 @@
 
 import React, { ReactNode } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, SearchIcon, BellIcon, UserIcon } from 'lucide-react';
+import { MapPin, SearchIcon, BellIcon, UserIcon, PlusIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface AppLayoutProps {
@@ -56,6 +56,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             <TabsTrigger value="search" className="flex-1 data-[state=active]:bg-thrivvo-teal data-[state=active]:text-white" asChild>
               <Link to="/search">
                 <SearchIcon size={20} />
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="add" className="flex-1 data-[state=active]:bg-thrivvo-teal data-[state=active]:text-white" asChild>
+              <Link to="/add-event">
+                <PlusIcon size={20} />
               </Link>
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex-1 data-[state=active]:bg-thrivvo-teal data-[state=active]:text-white" asChild>

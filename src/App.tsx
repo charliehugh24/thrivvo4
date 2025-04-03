@@ -9,6 +9,7 @@ import PartyEvents from "./pages/PartyEvents";
 import HouseParties from "./pages/HouseParties";
 import EventDetail from "./pages/EventDetail";
 import Search from "./pages/Search";
+import AddEvent from "./pages/AddEvent";
 import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/house-parties" element={<HouseParties />} />
           <Route path="/event/:eventId" element={<EventDetail />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/add-event" element={<AddEvent />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
