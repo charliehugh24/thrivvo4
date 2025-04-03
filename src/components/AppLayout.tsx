@@ -1,7 +1,7 @@
 
 import React, { ReactNode } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SearchIcon, BellIcon, UserIcon, PlusIcon, Shuffle } from 'lucide-react';
+import { SearchIcon, BellIcon, UserIcon, PlusIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DirectMessages from './DirectMessages';
 
@@ -49,14 +49,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       </main>
       
       <footer className="sticky bottom-0 z-10 bg-background/80 backdrop-blur-sm border-t p-3">
-        <div className="flex items-center justify-between relative">
-          {/* Custom shuffle button at bottom left */}
-          <div className="absolute left-4 bottom-12 z-20">
-            <div className="bg-blue-500 rounded-md p-3 shadow-lg">
-              <Shuffle className="h-5 w-5 text-white" />
-            </div>
-          </div>
-          
+        <div className="flex items-center justify-between">
           <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
             <TabsList className="w-full bg-muted/50">
               <TabsTrigger value="discover" className="flex-1 data-[state=active]:bg-thrivvo-teal data-[state=active]:text-white" asChild>
