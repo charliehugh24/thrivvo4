@@ -1,4 +1,3 @@
-
 import { Event, User, EventCategory } from '../types';
 import { addHours, addMinutes, formatISO } from 'date-fns';
 
@@ -323,5 +322,6 @@ export const eventCategories: { id: EventCategory; name: string; icon: string }[
   { id: 'fitness', name: 'Fitness', icon: '💪' },
   { id: 'networking', name: 'Networking', icon: '🤝' },
   { id: 'outdoor', name: 'Outdoor', icon: '🌳' },
+  { id: 'sports', name: 'Sporting Events', icon: '🏆' },
   { id: 'other', name: 'Other', icon: '✨' },
 ];

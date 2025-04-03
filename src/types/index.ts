@@ -9,6 +9,7 @@ export type EventCategory =
   | 'fitness' 
   | 'networking' 
   | 'outdoor' 
+  | 'sports'  // Added new "sports" category
   | 'other';
 
 export interface Event {
