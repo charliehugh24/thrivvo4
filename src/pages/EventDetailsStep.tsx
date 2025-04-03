@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 
 // Mock location suggestions - in a real app, these would come from an API
 const locationSuggestions = [
