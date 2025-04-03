@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -9,7 +8,6 @@ import { ArrowLeft, MapPin, Navigation, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-// Interface for location search results
 interface LocationResult {
   id: string;
   name: string;
@@ -33,7 +31,6 @@ const EventDetailsStep = () => {
   const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
-    // Load saved data from session storage
     const savedData = sessionStorage.getItem('newEventData');
     if (savedData) {
       setEventData(prevData => ({
@@ -41,13 +38,11 @@ const EventDetailsStep = () => {
         ...JSON.parse(savedData)
       }));
     } else {
-      // If no data, go back to the start
       navigate('/add-event');
     }
   }, [navigate]);
 
   useEffect(() => {
-    // Search for locations when input changes
     const searchLocations = async () => {
       if (!eventData.location || eventData.location.trim().length < 2) {
         setLocationResults([]);
@@ -57,22 +52,17 @@ const EventDetailsStep = () => {
       setIsSearching(true);
 
       try {
-        // Simulate Google Maps Geocoding API call
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Generate realistic-looking address suggestions based on input
         const query = eventData.location.toLowerCase();
         
-        // Mock realistic address results
         const mockResults: LocationResult[] = [];
         
-        // Add some standard address types based on the query
         if (query.length > 1) {
           const streetTypes = ['Street', 'Avenue', 'Boulevard', 'Road', 'Lane', 'Drive'];
           const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia'];
           const states = ['NY', 'CA', 'IL', 'TX', 'AZ', 'PA'];
           
-          // Generate various address suggestions
           for (let i = 0; i < 5; i++) {
             const streetType = streetTypes[i % streetTypes.length];
             const city = cities[i % cities.length];
@@ -87,7 +77,6 @@ const EventDetailsStep = () => {
             });
           }
           
-          // Also add some landmarks or places
           if (query.length > 2) {
             mockResults.push({
               id: '5',
@@ -105,9 +94,7 @@ const EventDetailsStep = () => {
           }
         }
         
-        // Allow any full address to be entered by adding it as an option
         if (query.includes(' ') || query.length > 10) {
-          // This enables users to manually type a complete address
           mockResults.unshift({
             id: 'custom',
             name: `Use "${eventData.location}"`,
@@ -130,7 +117,6 @@ const EventDetailsStep = () => {
       }
     };
 
-    // Debounce search to prevent too many requests
     const timer = setTimeout(() => {
       searchLocations();
     }, 300);
@@ -143,7 +129,6 @@ const EventDetailsStep = () => {
   };
 
   const handleNext = () => {
-    // Validate required fields
     if (!eventData.description || !eventData.location || !eventData.date) {
       toast({
         title: "Missing information",
@@ -153,10 +138,7 @@ const EventDetailsStep = () => {
       return;
     }
 
-    // Save the updated data
     sessionStorage.setItem('newEventData', JSON.stringify(eventData));
-    
-    // Go to the photos step
     navigate('/add-event/photos');
   };
 
@@ -184,21 +166,16 @@ const EventDetailsStep = () => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
-          // In a real app, this would call a reverse geocoding API
-          // For now, we'll just set coordinates
           const { latitude, longitude } = position.coords;
           
-          // Simulate a reverse geocoding API call
-          await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
+          await new Promise(resolve => setTimeout(resolve, 800));
           
-          // Mock realistic reverse geocoded address
           const mockAddress = `${Math.floor(Math.random() * 1000) + 1} Main Street, ${
             ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'][Math.floor(Math.random() * 5)]
           }, ${
             ['NY', 'CA', 'IL', 'TX', 'AZ'][Math.floor(Math.random() * 5)]
           } ${Math.floor(Math.random() * 90000) + 10000}`;
           
-          // Set the location in state
           setEventData(prev => ({ ...prev, location: mockAddress }));
           
           toast({
@@ -255,71 +232,77 @@ const EventDetailsStep = () => {
 
           <div className="space-y-2">
             <label className="block text-sm font-medium">Location</label>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Type your address or location name" 
-                    value={eventData.location}
-                    className="pl-9 pr-10"
-                    onChange={(e) => handleChange('location', e.target.value)}
-                    onFocus={() => eventData.location.length > 1 && setOpen(true)}
-                    onKeyUp={() => eventData.location.length > 1 ? setOpen(true) : setOpen(false)}
-                  />
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
-                    onClick={getCurrentLocation}
-                    disabled={isLocating}
-                  >
-                    {isLocating ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Navigation className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                {isSearching ? (
-                  <div className="p-4 text-center">
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Searching locations...</p>
-                  </div>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Type your address or location name" 
+                value={eventData.location}
+                className="pl-9 pr-10"
+                onChange={(e) => {
+                  handleChange('location', e.target.value);
+                  setOpen(e.target.value.length > 1);
+                }}
+                onFocus={() => setOpen(eventData.location.length > 1)}
+              />
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="icon" 
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8"
+                onClick={getCurrentLocation}
+                disabled={isLocating}
+              >
+                {isLocating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
+                  <Navigation className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            
+            {open && eventData.location.length > 1 && (
+              <div className="relative z-50">
+                <div className="absolute w-full rounded-md border bg-popover shadow-md outline-none animate-in fade-in-0 zoom-in-95">
                   <div className="overflow-hidden bg-popover rounded-md">
-                    {locationResults && locationResults.length > 0 ? (
-                      <div className="p-1">
-                        {locationResults.map((location) => (
-                          <div
-                            key={location.id}
-                            onClick={() => handleLocationSelect(location)}
-                            className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-                          >
-                            <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
-                            <div className="flex flex-col overflow-hidden">
-                              <span className="font-medium truncate">{location.name}</span>
-                              <span className="text-xs text-muted-foreground truncate">{location.address}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : eventData.location.trim().length > 0 ? (
+                    {isSearching ? (
                       <div className="p-4 text-center">
-                        <p className="text-sm text-muted-foreground">No locations found</p>
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">Searching locations...</p>
                       </div>
                     ) : (
-                      <div className="p-4 text-center">
-                        <p className="text-sm text-muted-foreground">Type your address to search for locations</p>
+                      <div className="p-1">
+                        {locationResults && locationResults.length > 0 ? (
+                          <div>
+                            {locationResults.map((location) => (
+                              <div
+                                key={location.id}
+                                onClick={() => handleLocationSelect(location)}
+                                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                              >
+                                <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
+                                <div className="flex flex-col overflow-hidden">
+                                  <span className="font-medium truncate">{location.name}</span>
+                                  <span className="text-xs text-muted-foreground truncate">{location.address}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : eventData.location.trim().length > 0 ? (
+                          <div className="p-4 text-center">
+                            <p className="text-sm text-muted-foreground">No locations found</p>
+                          </div>
+                        ) : (
+                          <div className="p-4 text-center">
+                            <p className="text-sm text-muted-foreground">Type your address to search for locations</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </PopoverContent>
-            </Popover>
+                </div>
+              </div>
+            )}
+            
             <p className="text-xs text-muted-foreground">
               Enter a full address or use your current location
             </p>
