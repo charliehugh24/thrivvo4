@@ -25,15 +25,7 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
   const { toast } = useToast();
 
   const handleNext = () => {
-    if (!eventData.description || !eventData.location || !eventData.date) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all the required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Remove validation to allow proceeding to the photos step regardless of field completion
     onNext();
   };
 
