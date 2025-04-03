@@ -5,8 +5,6 @@ import AppLayout from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { eventCategories } from '@/data/mockData';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,7 +13,6 @@ const EventDetailsStep = () => {
   const [eventData, setEventData] = useState({
     type: '',
     name: '',
-    category: '',
     description: '',
     location: '',
     date: ''
@@ -42,7 +39,7 @@ const EventDetailsStep = () => {
 
   const handleNext = () => {
     // Validate required fields
-    if (!eventData.category || !eventData.description || !eventData.location || !eventData.date) {
+    if (!eventData.description || !eventData.location || !eventData.date) {
       toast({
         title: "Missing information",
         description: "Please fill in all the required fields",
@@ -73,25 +70,6 @@ const EventDetailsStep = () => {
         </div>
 
         <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium">Category</label>
-            <Select 
-              value={eventData.category} 
-              onValueChange={(value) => handleChange('category', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {eventCategories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="space-y-2">
             <label className="block text-sm font-medium">Description</label>
             <Textarea 

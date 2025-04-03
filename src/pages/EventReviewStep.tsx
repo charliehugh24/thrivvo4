@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
-import { eventCategories } from '@/data/mockData';
 import { ArrowLeft, Calendar, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
@@ -13,7 +12,6 @@ const EventReviewStep = () => {
   const [eventData, setEventData] = useState({
     type: '',
     name: '',
-    category: '',
     description: '',
     location: '',
     date: '',
@@ -34,11 +32,6 @@ const EventReviewStep = () => {
 
   const handleBack = () => {
     navigate('/add-event/photos');
-  };
-
-  const getCategoryName = (categoryId: string) => {
-    const category = eventCategories.find(c => c.id === categoryId);
-    return category ? category.name : categoryId;
   };
 
   const formatDate = (dateString: string) => {
@@ -89,7 +82,7 @@ const EventReviewStep = () => {
           
           <div className="flex items-center text-sm text-muted-foreground">
             <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-xs font-medium">
-              {getCategoryName(eventData.category)}
+              {eventData.type.charAt(0).toUpperCase() + eventData.type.slice(1)}
             </span>
           </div>
           
