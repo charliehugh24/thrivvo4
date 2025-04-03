@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
-import { Home, MapPin, Clock, List } from 'lucide-react';
+import { List } from 'lucide-react';
 import EventList from '@/components/EventList';
 import { mockEvents } from '@/data/mockData';
 import CategoryFilter from '@/components/CategoryFilter';
@@ -37,10 +38,9 @@ const HouseParties = () => {
     if (!selectedCategory) return "View All Events";
     
     switch(selectedCategory) {
-      case 'party': return "View Party Events";
+      case 'party': return "View House Party Events";
       case 'sports': return "View Sports Events";
       case 'food': return "View Food Events";  
-      case 'art': return "View Art Events";
       default: return `View ${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Events`;
     }
   };

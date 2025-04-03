@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { MessageSquare, Send, X } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { User } from '@/types';
@@ -266,18 +264,18 @@ const DirectMessages = () => {
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          size="sm" 
-          className="flex items-center gap-1 h-8 ml-2 bg-muted/50"
+          size="icon" 
+          className="h-8 w-8 bg-muted/50"
         >
-          <MessageSquare size={14} />
-          <span className="font-normal">Messages</span>
+          <MessageSquare size={16} />
           {conversations.some(c => c.unread) && (
-            <span className="bg-thrivvo-orange text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 bg-thrivvo-orange text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
               {conversations.filter(c => c.unread).length}
             </span>
           )}
         </Button>
       </DialogTrigger>
+      
       <DialogContent className="sm:max-w-md p-0 h-[500px] flex flex-col">
         <DialogHeader className="px-4 py-2 border-b">
           <DialogTitle>
