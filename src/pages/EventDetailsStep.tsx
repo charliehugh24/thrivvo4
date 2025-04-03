@@ -5,24 +5,17 @@ import AppLayout from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, MapPin, Navigation } from 'lucide-react';
+import { ArrowLeft, MapPin, Navigation, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 
-// Mock location suggestions - in a real app, these would come from an API
-const locationSuggestions = [
-  'New York, NY',
-  'Los Angeles, CA',
-  'Chicago, IL',
-  'Houston, TX',
-  'Phoenix, AZ',
-  'Philadelphia, PA',
-  'San Antonio, TX',
-  'San Diego, CA',
-  'Dallas, TX',
-  'San Francisco, CA'
-];
+// Interface for location search results
+interface LocationResult {
+  id: string;
+  name: string;
+  address: string;
+}
 
 const EventDetailsStep = () => {
   const navigate = useNavigate();
@@ -35,7 +28,8 @@ const EventDetailsStep = () => {
   });
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [filteredLocations, setFilteredLocations] = useState<string[]>(locationSuggestions);
+  const [isSearching, setIsSearching] = useState(false);
+  const [locationResults, setLocationResults] = useState<LocationResult[]>([]);
   const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
@@ -53,16 +47,71 @@ const EventDetailsStep = () => {
   }, [navigate]);
 
   useEffect(() => {
-    // Filter locations based on input
-    if (eventData.location) {
-      const filtered = locationSuggestions.filter(location =>
-        location.toLowerCase().includes(eventData.location.toLowerCase())
-      );
-      setFilteredLocations(filtered);
-    } else {
-      setFilteredLocations(locationSuggestions);
-    }
-  }, [eventData.location]);
+    // Search for locations when input changes
+    const searchLocations = async () => {
+      if (!eventData.location || eventData.location.trim().length < 2) {
+        setLocationResults([]);
+        return;
+      }
+
+      setIsSearching(true);
+
+      try {
+        // Simulate API call with a timeout
+        // In production, replace this with actual geocoding API call
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Mock location results based on input
+        const query = eventData.location.toLowerCase();
+        const mockResults: LocationResult[] = [
+          {
+            id: '1',
+            name: `${eventData.location} City Center`,
+            address: `123 Main St, ${eventData.location}, CA`
+          },
+          {
+            id: '2',
+            name: `${eventData.location} Convention Center`,
+            address: `456 Convention Ave, ${eventData.location}, CA`
+          },
+          {
+            id: '3',
+            name: `${eventData.location} Downtown`,
+            address: `789 Downtown Blvd, ${eventData.location}, CA`
+          },
+          {
+            id: '4',
+            name: `${eventData.location} Park`,
+            address: `101 Park Road, ${eventData.location}, CA`
+          },
+          {
+            id: '5',
+            name: `${eventData.location} Hotel`,
+            address: `202 Hotel Way, ${eventData.location}, CA`
+          }
+        ];
+        
+        setLocationResults(mockResults);
+      } catch (error) {
+        console.error("Error searching for locations:", error);
+        toast({
+          title: "Search error",
+          description: "Could not search for locations",
+          variant: "destructive",
+        });
+        setLocationResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    // Debounce search to prevent too many requests
+    const timer = setTimeout(() => {
+      searchLocations();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [eventData.location, toast]);
 
   const handleBack = () => {
     navigate(`/add-event/name?type=${eventData.type}`);
@@ -90,8 +139,8 @@ const EventDetailsStep = () => {
     setEventData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleLocationSelect = (location: string) => {
-    setEventData(prev => ({ ...prev, location }));
+  const handleLocationSelect = (location: LocationResult) => {
+    setEventData(prev => ({ ...prev, location: location.address }));
     setOpen(false);
   };
 
@@ -113,10 +162,15 @@ const EventDetailsStep = () => {
           // In a real app, this would call a reverse geocoding API
           // For now, we'll just set coordinates
           const { latitude, longitude } = position.coords;
-          const locationString = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          
+          // Simulate a reverse geocoding API call
+          await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
+          
+          // Mock address based on coordinates
+          const mockAddress = `${latitude.toFixed(4)}, ${longitude.toFixed(4)} (Your current location)`;
           
           // Set the location in state
-          handleLocationSelect(locationString);
+          setEventData(prev => ({ ...prev, location: mockAddress }));
           
           toast({
             title: "Location detected",
@@ -177,7 +231,7 @@ const EventDetailsStep = () => {
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Event location" 
+                    placeholder="Type to search location" 
                     value={eventData.location}
                     className="pl-9 pr-10"
                     onChange={(e) => handleChange('location', e.target.value)}
@@ -191,30 +245,52 @@ const EventDetailsStep = () => {
                     onClick={getCurrentLocation}
                     disabled={isLocating}
                   >
-                    <Navigation className={`h-4 w-4 ${isLocating ? 'animate-pulse text-primary' : ''}`} />
+                    {isLocating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Navigation className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="start">
-                {filteredLocations.length > 0 && (
+                {isSearching ? (
+                  <div className="p-4 text-center">
+                    <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Searching locations...</p>
+                  </div>
+                ) : locationResults && locationResults.length > 0 ? (
                   <Command>
                     <CommandGroup>
-                      {filteredLocations.map((location) => (
+                      {locationResults.map((location) => (
                         <CommandItem
-                          key={location}
+                          key={location.id}
                           onSelect={() => handleLocationSelect(location)}
                           className="cursor-pointer"
                         >
                           <MapPin className="mr-2 h-4 w-4" />
-                          {location}
+                          <div className="flex flex-col">
+                            <span className="font-medium">{location.name}</span>
+                            <span className="text-xs text-muted-foreground">{location.address}</span>
+                          </div>
                         </CommandItem>
                       ))}
                     </CommandGroup>
-                    <CommandEmpty>No locations found</CommandEmpty>
                   </Command>
+                ) : eventData.location.trim().length > 0 ? (
+                  <div className="p-4 text-center">
+                    <CommandEmpty>No locations found</CommandEmpty>
+                  </div>
+                ) : (
+                  <div className="p-4 text-center">
+                    <p className="text-sm text-muted-foreground">Start typing to search for locations</p>
+                  </div>
                 )}
               </PopoverContent>
             </Popover>
+            <p className="text-xs text-muted-foreground">
+              Enter an address or use your current location
+            </p>
           </div>
 
           <div className="space-y-2">
