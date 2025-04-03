@@ -16,6 +16,7 @@ const EventDetailsStep = () => {
     date: ''
   });
 
+  // Fetch existing event data from session storage
   useEffect(() => {
     const savedData = sessionStorage.getItem('newEventData');
     if (savedData) {
@@ -33,12 +34,18 @@ const EventDetailsStep = () => {
   };
 
   const handleNext = () => {
+    // Save the complete event data to session storage
     sessionStorage.setItem('newEventData', JSON.stringify(eventData));
     navigate('/add-event/photos');
   };
 
   const handleChange = (field: string, value: string) => {
-    setEventData(prev => ({ ...prev, [field]: value }));
+    setEventData(prev => {
+      const updated = { ...prev, [field]: value };
+      // Also save to session storage on each change for backup
+      sessionStorage.setItem('newEventData', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (

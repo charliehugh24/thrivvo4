@@ -37,6 +37,11 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
     onNext();
   };
 
+  // Make sure location changes are properly handled
+  const handleLocationChange = (location: string) => {
+    onDataChange('location', location);
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -51,7 +56,7 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
 
       <LocationSearch 
         location={eventData.location}
-        onLocationChange={(location) => onDataChange('location', location)}
+        onLocationChange={handleLocationChange}
       />
 
       <div className="space-y-2">
