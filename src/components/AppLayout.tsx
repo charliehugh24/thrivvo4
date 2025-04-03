@@ -1,7 +1,7 @@
 
 import React, { ReactNode } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, SearchIcon, BellIcon, UserIcon, PlusIcon } from 'lucide-react';
+import { SearchIcon, BellIcon, UserIcon, PlusIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DirectMessages from './DirectMessages';
 
@@ -34,10 +34,20 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           </h1>
           
           <div className="flex items-center gap-2">
-            <button className="flex items-center text-sm text-muted-foreground gap-1 bg-muted px-2 py-1 rounded-full">
-              <MapPin size={14} />
-              <span>2mi</span>
-            </button>
+            <div className="relative">
+              <div className="flex items-center text-sm text-muted-foreground gap-1">
+                <div className="relative">
+                  <img 
+                    src="/lovable-uploads/8772df01-f105-4eae-aa70-173c7563a131.png" 
+                    alt="Location Pin" 
+                    className="h-7 w-7"
+                  />
+                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 translate-y-[-30%] text-xs font-medium text-white">
+                    2mi
+                  </span>
+                </div>
+              </div>
+            </div>
             <DirectMessages />
           </div>
         </div>
