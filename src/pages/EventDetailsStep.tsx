@@ -259,31 +259,35 @@ const EventDetailsStep = () => {
                     <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">Searching locations...</p>
                   </div>
-                ) : locationResults && locationResults.length > 0 ? (
-                  <Command>
-                    <CommandGroup>
-                      {locationResults.map((location) => (
-                        <CommandItem
-                          key={location.id}
-                          onSelect={() => handleLocationSelect(location)}
-                          className="cursor-pointer"
-                        >
-                          <MapPin className="mr-2 h-4 w-4" />
-                          <div className="flex flex-col">
-                            <span className="font-medium">{location.name}</span>
-                            <span className="text-xs text-muted-foreground">{location.address}</span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
-                ) : eventData.location.trim().length > 0 ? (
-                  <div className="p-4 text-center">
-                    <CommandEmpty>No locations found</CommandEmpty>
-                  </div>
                 ) : (
-                  <div className="p-4 text-center">
-                    <p className="text-sm text-muted-foreground">Start typing to search for locations</p>
+                  <div className="overflow-hidden bg-popover rounded-md">
+                    {locationResults && locationResults.length > 0 ? (
+                      <Command>
+                        <CommandGroup>
+                          {locationResults.map((location) => (
+                            <CommandItem
+                              key={location.id}
+                              onSelect={() => handleLocationSelect(location)}
+                              className="cursor-pointer"
+                            >
+                              <MapPin className="mr-2 h-4 w-4" />
+                              <div className="flex flex-col">
+                                <span className="font-medium">{location.name}</span>
+                                <span className="text-xs text-muted-foreground">{location.address}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    ) : eventData.location.trim().length > 0 ? (
+                      <div className="p-4 text-center">
+                        <p className="text-sm text-muted-foreground">No locations found</p>
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center">
+                        <p className="text-sm text-muted-foreground">Start typing to search for locations</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </PopoverContent>
