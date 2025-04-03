@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -39,10 +39,23 @@ const Profile = () => {
   const [formData, setFormData] = useState(profileData);
   const [activeTab, setActiveTab] = useState("about");
   const [eventsSubTab, setEventsSubTab] = useState("myEvents");
+  const [userCreatedEvents, setUserCreatedEvents] = useState<Event[]>([]);
+
+  // Get user created events from localStorage
+  useEffect(() => {
+    const storedEvents = localStorage.getItem('userCreatedEvents');
+    if (storedEvents) {
+      const parsedEvents = JSON.parse(storedEvents);
+      setUserCreatedEvents(parsedEvents);
+    }
+  }, []);
 
   // Filter events created by the current user (using the mock user ID for now)
   // In a real app, you would compare against the actual logged-in user ID
-  const createdEvents = mockEvents.filter(event => event.host.id === "user-1");
+  const createdEvents = [
+    ...userCreatedEvents,
+    ...mockEvents.filter(event => event.host.id === "user-1")
+  ];
   const attendingEvents = mockEvents.slice(0, 3); // Just using some events for demo
 
   const handleEditToggle = () => {

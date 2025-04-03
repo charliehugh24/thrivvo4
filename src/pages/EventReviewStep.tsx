@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { Event } from '@/types';
 
 const EventReviewStep = () => {
   const navigate = useNavigate();
@@ -46,6 +47,40 @@ const EventReviewStep = () => {
 
   const handleSubmit = () => {
     setSubmitting(true);
+    
+    // Create an event object with the correct structure based on Event type
+    const newEvent: Event = {
+      id: `user-event-${Date.now()}`,
+      title: eventData.name,
+      description: eventData.description,
+      category: eventData.type as any || 'other',
+      location: {
+        name: eventData.location,
+        address: eventData.location,
+        distance: 0
+      },
+      time: {
+        start: eventData.date
+      },
+      host: {
+        id: "user-1", // Current user ID
+        name: "Alex Johnson", // Current user name
+        verified: false,
+        avatar: "/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png" // Current user avatar
+      },
+      attendees: {
+        count: 1
+      },
+      images: eventData.images,
+      vibe: [],
+      isPrivate: false
+    };
+    
+    // Save to localStorage (get existing events first)
+    const existingEvents = localStorage.getItem('userCreatedEvents');
+    const userEvents = existingEvents ? JSON.parse(existingEvents) : [];
+    userEvents.push(newEvent);
+    localStorage.setItem('userCreatedEvents', JSON.stringify(userEvents));
     
     // Simulate API call with a timeout
     setTimeout(() => {
