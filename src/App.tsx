@@ -10,6 +10,10 @@ import HouseParties from "./pages/HouseParties";
 import EventDetail from "./pages/EventDetail";
 import Search from "./pages/Search";
 import AddEvent from "./pages/AddEvent";
+import EventNameStep from "./pages/EventNameStep";
+import EventDetailsStep from "./pages/EventDetailsStep";
+import EventPhotosStep from "./pages/EventPhotosStep";
+import EventReviewStep from "./pages/EventReviewStep";
 import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -29,6 +33,10 @@ const App = () => (
           <Route path="/event/:eventId" element={<EventDetail />} />
           <Route path="/search" element={<Search />} />
           <Route path="/add-event" element={<AddEvent />} />
+          <Route path="/add-event/name" element={<EventNameStep />} />
+          <Route path="/add-event/details-info" element={<EventDetailsStep />} />
+          <Route path="/add-event/photos" element={<EventPhotosStep />} />
+          <Route path="/add-event/review" element={<EventReviewStep />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
