@@ -14,6 +14,7 @@ interface LocationResult {
   id: string;
   name: string;
   address: string;
+  placeId?: string;
 }
 
 const EventDetailsStep = () => {
@@ -56,39 +57,67 @@ const EventDetailsStep = () => {
       setIsSearching(true);
 
       try {
-        // Simulate API call with a timeout
+        // Simulate Google Maps Geocoding API call
         // In production, replace this with actual geocoding API call
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Mock location results based on input
+        // Generate realistic-looking address suggestions based on input
         const query = eventData.location.toLowerCase();
-        const mockResults: LocationResult[] = [
-          {
+        
+        // Mock realistic address results
+        const mockResults: LocationResult[] = [];
+        
+        // Add some standard address types based on the query
+        if (query.includes('main') || query.length > 3) {
+          mockResults.push({
             id: '1',
-            name: `${eventData.location} City Center`,
-            address: `123 Main St, ${eventData.location}, CA`
-          },
-          {
+            name: `${query.charAt(0).toUpperCase() + query.slice(1)} Street`,
+            address: `${Math.floor(Math.random() * 1000) + 1} ${query.charAt(0).toUpperCase() + query.slice(1)} Street, New York, NY`,
+            placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+          });
+        }
+        
+        if (query.length > 2) {
+          mockResults.push({
             id: '2',
-            name: `${eventData.location} Convention Center`,
-            address: `456 Convention Ave, ${eventData.location}, CA`
-          },
-          {
+            name: `${query.charAt(0).toUpperCase() + query.slice(1)} Avenue`,
+            address: `${Math.floor(Math.random() * 500) + 1} ${query.charAt(0).toUpperCase() + query.slice(1)} Avenue, Chicago, IL`,
+            placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+          });
+          
+          mockResults.push({
             id: '3',
-            name: `${eventData.location} Downtown`,
-            address: `789 Downtown Blvd, ${eventData.location}, CA`
-          },
-          {
+            name: `${query.charAt(0).toUpperCase() + query.slice(1)} Boulevard`,
+            address: `${Math.floor(Math.random() * 300) + 1} ${query.charAt(0).toUpperCase() + query.slice(1)} Boulevard, Los Angeles, CA`,
+            placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+          });
+          
+          mockResults.push({
             id: '4',
-            name: `${eventData.location} Park`,
-            address: `101 Park Road, ${eventData.location}, CA`
-          },
-          {
+            name: `${query.charAt(0).toUpperCase() + query.slice(1)} Plaza`,
+            address: `${query.charAt(0).toUpperCase() + query.slice(1)} Plaza, San Francisco, CA`,
+            placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+          });
+          
+          // Add a specific building or landmark
+          mockResults.push({
             id: '5',
-            name: `${eventData.location} Hotel`,
-            address: `202 Hotel Way, ${eventData.location}, CA`
-          }
-        ];
+            name: `${query.charAt(0).toUpperCase() + query.slice(1)} Center`,
+            address: `${query.charAt(0).toUpperCase() + query.slice(1)} Center, 555 Business Park, Seattle, WA`,
+            placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+          });
+        }
+        
+        // Allow any full address to be entered
+        if (query.includes(' ')) {
+          // This enables users to manually type a complete address
+          mockResults.push({
+            id: '0',
+            name: `Use "${eventData.location}"`,
+            address: eventData.location,
+            placeId: `custom_${Math.random().toString(36).substring(2, 10)}`
+          });
+        }
         
         setLocationResults(mockResults);
       } catch (error) {
@@ -165,8 +194,12 @@ const EventDetailsStep = () => {
           // Simulate a reverse geocoding API call
           await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
           
-          // Mock address based on coordinates
-          const mockAddress = `${latitude.toFixed(4)}, ${longitude.toFixed(4)} (Your current location)`;
+          // Mock realistic reverse geocoded address
+          const mockAddress = `${Math.floor(Math.random() * 1000) + 1} Main Street, ${
+            ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'][Math.floor(Math.random() * 5)]
+          }, ${
+            ['NY', 'CA', 'IL', 'TX', 'AZ'][Math.floor(Math.random() * 5)]
+          } ${Math.floor(Math.random() * 90000) + 10000}`;
           
           // Set the location in state
           setEventData(prev => ({ ...prev, location: mockAddress }));
@@ -202,8 +235,6 @@ const EventDetailsStep = () => {
     );
   };
 
-  // Render only the basic location search UI - we'll use simple divs instead of Command component
-  // This removes the dependency on the cmdk component that's causing issues
   return (
     <AppLayout activeTab="add">
       <div className="p-4 space-y-6">
@@ -232,7 +263,7 @@ const EventDetailsStep = () => {
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Type to search location" 
+                    placeholder="Type your address or location name" 
                     value={eventData.location}
                     className="pl-9 pr-10"
                     onChange={(e) => handleChange('location', e.target.value)}
@@ -284,7 +315,7 @@ const EventDetailsStep = () => {
                       </div>
                     ) : (
                       <div className="p-4 text-center">
-                        <p className="text-sm text-muted-foreground">Start typing to search for locations</p>
+                        <p className="text-sm text-muted-foreground">Type your address to search for locations</p>
                       </div>
                     )}
                   </div>
@@ -292,7 +323,7 @@ const EventDetailsStep = () => {
               </PopoverContent>
             </Popover>
             <p className="text-xs text-muted-foreground">
-              Enter an address or use your current location
+              Enter a full address or use your current location
             </p>
           </div>
 
