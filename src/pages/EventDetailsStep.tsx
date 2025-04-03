@@ -35,7 +35,7 @@ const EventDetailsStep = () => {
   });
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [filteredLocations, setFilteredLocations] = useState<string[]>([]);
+  const [filteredLocations, setFilteredLocations] = useState<string[]>(locationSuggestions);
 
   useEffect(() => {
     // Load saved data from session storage
@@ -59,7 +59,7 @@ const EventDetailsStep = () => {
       );
       setFilteredLocations(filtered);
     } else {
-      setFilteredLocations([]);
+      setFilteredLocations(locationSuggestions);
     }
   }, [eventData.location]);
 
@@ -131,21 +131,23 @@ const EventDetailsStep = () => {
                 </div>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="start">
-                <Command>
-                  <CommandEmpty>No locations found</CommandEmpty>
-                  <CommandGroup>
-                    {filteredLocations.map((location) => (
-                      <CommandItem
-                        key={location}
-                        onSelect={() => handleLocationSelect(location)}
-                        className="cursor-pointer"
-                      >
-                        <MapPin className="mr-2 h-4 w-4" />
-                        {location}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </Command>
+                {filteredLocations.length > 0 && (
+                  <Command>
+                    <CommandGroup>
+                      {filteredLocations.map((location) => (
+                        <CommandItem
+                          key={location}
+                          onSelect={() => handleLocationSelect(location)}
+                          className="cursor-pointer"
+                        >
+                          <MapPin className="mr-2 h-4 w-4" />
+                          {location}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    <CommandEmpty>No locations found</CommandEmpty>
+                  </Command>
+                )}
               </PopoverContent>
             </Popover>
           </div>
