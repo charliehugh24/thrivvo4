@@ -53,7 +53,7 @@ const PartyEvents = () => {
           onClick={() => navigate('/house-parties')}
         >
           <List className="mr-2" size={16} />
-          View House Parties
+          View House Party Events
         </Button>
         
         <Separator />

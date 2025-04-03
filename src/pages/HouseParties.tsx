@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -32,6 +33,20 @@ const HouseParties = () => {
     setSelectedCategory(category);
   };
   
+  // Determine the button text based on the selected category
+  const getButtonText = () => {
+    if (!selectedCategory) return "View All Events";
+    
+    switch(selectedCategory) {
+      case 'party': return "View Party Events";
+      case 'sports': return "View Sports Events";
+      case 'music': return "View Music Events";
+      case 'food': return "View Food Events";  
+      case 'art': return "View Art Events";
+      default: return `View ${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Events`;
+    }
+  };
+  
   return (
     <AppLayout activeTab="discover">
       <div className="p-4 space-y-6">
@@ -57,7 +72,7 @@ const HouseParties = () => {
           onClick={() => navigate('/party-events')}
         >
           <List className="mr-2" size={16} />
-          View Party Events
+          {getButtonText()}
         </Button>
         
         <Separator />
