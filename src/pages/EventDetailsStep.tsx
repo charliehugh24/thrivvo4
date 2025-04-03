@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, MapPin, Navigation, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 
 // Interface for location search results
 interface LocationResult {
@@ -203,6 +202,8 @@ const EventDetailsStep = () => {
     );
   };
 
+  // Render only the basic location search UI - we'll use simple divs instead of Command component
+  // This removes the dependency on the cmdk component that's causing issues
   return (
     <AppLayout activeTab="add">
       <div className="p-4 space-y-6">
@@ -262,23 +263,21 @@ const EventDetailsStep = () => {
                 ) : (
                   <div className="overflow-hidden bg-popover rounded-md">
                     {locationResults && locationResults.length > 0 ? (
-                      <Command>
-                        <CommandGroup>
-                          {locationResults.map((location) => (
-                            <CommandItem
-                              key={location.id}
-                              onSelect={() => handleLocationSelect(location)}
-                              className="cursor-pointer"
-                            >
-                              <MapPin className="mr-2 h-4 w-4" />
-                              <div className="flex flex-col">
-                                <span className="font-medium">{location.name}</span>
-                                <span className="text-xs text-muted-foreground">{location.address}</span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
+                      <div className="p-1">
+                        {locationResults.map((location) => (
+                          <div
+                            key={location.id}
+                            onClick={() => handleLocationSelect(location)}
+                            className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                          >
+                            <MapPin className="mr-2 h-4 w-4" />
+                            <div className="flex flex-col">
+                              <span className="font-medium">{location.name}</span>
+                              <span className="text-xs text-muted-foreground">{location.address}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     ) : eventData.location.trim().length > 0 ? (
                       <div className="p-4 text-center">
                         <p className="text-sm text-muted-foreground">No locations found</p>
