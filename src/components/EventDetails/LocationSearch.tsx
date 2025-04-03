@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -18,7 +17,6 @@ interface LocationSearchProps {
   onLocationChange: (location: string) => void;
 }
 
-// Common real addresses to make suggestions more realistic
 const realAddresses = [
   {
     streetNumber: '1002',
@@ -82,7 +80,6 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   const [isLocating, setIsLocating] = useState(false);
   const { toast } = useToast();
 
-  // Update internal state when prop changes
   useEffect(() => {
     setSearchText(location);
   }, [location]);
@@ -96,13 +93,11 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
       setIsSearching(true);
       try {
-        // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 300));
         
         const query = searchText.toLowerCase();
         let results: LocationResult[] = [];
 
-        // Add exact address option as first option
         const exactAddressOption: LocationResult = {
           id: 'custom',
           name: `Use "${searchText}"`,
@@ -110,19 +105,15 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           placeId: `custom_${Math.random().toString(36).substring(2, 10)}`
         };
         
-        // Match against our real addresses
         results = matchRealAddresses(query);
         
-        // Add the exact match at the top if we have any results
         if (results.length > 0) {
           results = [exactAddressOption, ...results];
         } else {
-          // If no matches, just add the exact address option and some generated options
           results = [exactAddressOption, ...generateAddressSuggestions(query)];
         }
 
         setLocationResults(results);
-        // Only open the popover if we have results AND the input is focused
         setIsSearchOpen(results.length > 0 && document.activeElement === document.querySelector('input[placeholder="Enter any address worldwide"]'));
       } catch (error) {
         console.error("Error searching for locations:", error);
@@ -144,18 +135,15 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     return () => clearTimeout(timer);
   }, [searchText, toast]);
 
-  // Find matches from our real address list
   const matchRealAddresses = (query: string): LocationResult[] => {
     const results: LocationResult[] = [];
     
-    // Split the query to match parts of addresses
     const queryParts = query.toLowerCase().split(' ');
     
     realAddresses.forEach((address, index) => {
       const fullAddressLower = `${address.streetNumber} ${address.street} ${address.city} ${address.state} ${address.zip}`.toLowerCase();
       const streetAddressLower = `${address.streetNumber} ${address.street}`.toLowerCase();
       
-      // Special case for "1002 farm lane"
       if (query.includes('1002') && query.includes('farm') && query.includes('lane')) {
         results.push({
           id: `real-${index}`,
@@ -166,10 +154,8 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         return;
       }
       
-      // Check if all query parts match somewhere in the address
       const allPartsMatch = queryParts.every(part => fullAddressLower.includes(part));
       
-      // Check if it's a good match for street address
       const isStreetMatch = streetAddressLower.includes(query) || queryParts.every(part => streetAddressLower.includes(part));
       
       if (allPartsMatch || isStreetMatch) {
@@ -185,24 +171,19 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     return results;
   };
 
-  // Generate additional address suggestions based on input
   const generateAddressSuggestions = (query: string): LocationResult[] => {
     const results: LocationResult[] = [];
     const streetTypes = ["Street", "Avenue", "Boulevard", "Road", "Drive"];
     const cities = ["West Chester", "Philadelphia", "New York", "Boston", "Chicago"];
     const states = ["PA", "NY", "MA", "IL"];
 
-    // Parse the query to see if it contains a street number
     const queryParts = query.split(' ');
     const possibleNumber = queryParts[0];
     const hasNumber = /^\d+$/.test(possibleNumber);
     
-    // Generate a few mock addresses
     for (let i = 0; i < 3; i++) {
-      // If the query starts with a number, use that as the street number
       const num = hasNumber ? possibleNumber : Math.floor(Math.random() * 1000) + 1;
       
-      // Use parts of the query for the street name
       let street;
       if (hasNumber && queryParts.length > 1) {
         street = queryParts.slice(1).join(' ');
@@ -236,17 +217,14 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchText(value);
-    // Update the parent component with the current text
-    // This ensures the value is saved even if a suggestion isn't selected
     onLocationChange(value);
+    
+    if (value.trim().length > 1) {
+      setIsSearchOpen(true);
+    }
   };
 
   const handleInputBlur = () => {
-    // Give a small delay before closing the popover
-    // to allow for clicking on a suggestion
-    setTimeout(() => {
-      setIsSearchOpen(false);
-    }, 200);
   };
 
   const getCurrentLocation = () => {
@@ -265,10 +243,8 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       try {
         const { latitude, longitude } = position.coords;
 
-        // Simulate reverse geocoding delay
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        // For demo purposes, use a fixed address
         const mockAddress = "1002 Farm Lane, West Chester, PA 19383";
         onLocationChange(mockAddress);
         setSearchText(mockAddress);
@@ -318,11 +294,10 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
               className="pl-9 pr-10" 
               onChange={handleInputChange}
               onFocus={() => {
-                if (locationResults.length > 0) {
+                if (searchText.trim().length > 1 && locationResults.length > 0) {
                   setIsSearchOpen(true);
                 }
               }}
-              onBlur={handleInputBlur}
             />
             <Button 
               type="button" 
@@ -336,7 +311,12 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
             </Button>
           </div>
         </PopoverTrigger>
-        <PopoverContent className="p-0 w-[calc(100vw-2rem)] max-w-lg" align="start" sideOffset={5}>
+        <PopoverContent 
+          className="p-0 w-[calc(100vw-2rem)] max-w-lg" 
+          align="start" 
+          sideOffset={5}
+          onInteractOutside={() => setIsSearchOpen(false)}
+        >
           {isSearching ? (
             <div className="p-4 text-center">
               <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
