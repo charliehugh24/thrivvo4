@@ -4,20 +4,20 @@ import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ImageIcon, X } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const EventPhotosStep = () => {
   const navigate = useNavigate();
   const [eventData, setEventData] = useState({
     type: '',
     name: '',
-    category: '',
     description: '',
     location: '',
     date: '',
     images: [] as string[]
   });
   const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Load saved data from session storage
@@ -39,7 +39,7 @@ const EventPhotosStep = () => {
     // Save current images before going back
     const updatedEventData = { ...eventData };
     sessionStorage.setItem('newEventData', JSON.stringify(updatedEventData));
-    navigate('/add-event/details-info');
+    navigate('/add-event/details');
   };
 
   const handleNext = () => {

@@ -5,7 +5,7 @@ import AppLayout from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const EventReviewStep = () => {
   const navigate = useNavigate();
@@ -18,6 +18,7 @@ const EventReviewStep = () => {
     images: [] as string[]
   });
   const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Load saved data from session storage
