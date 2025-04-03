@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 
 interface LocationResult {
@@ -73,12 +72,14 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   location,
   onLocationChange
 }) => {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchText, setSearchText] = useState(location || '');
   const [isSearching, setIsSearching] = useState(false);
   const [locationResults, setLocationResults] = useState<LocationResult[]>([]);
+  const [showResults, setShowResults] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const { toast } = useToast();
+  const resultsContainerRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setSearchText(location);
@@ -114,7 +115,9 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         }
 
         setLocationResults(results);
-        setIsSearchOpen(results.length > 0 && document.activeElement === document.querySelector('input[placeholder="Enter any address worldwide"]'));
+        if (results.length > 0) {
+          setShowResults(true);
+        }
       } catch (error) {
         console.error("Error searching for locations:", error);
         toast({
@@ -136,39 +139,28 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   }, [searchText, toast]);
 
   const matchRealAddresses = (query: string): LocationResult[] => {
-    const results: LocationResult[] = [];
-    
-    const queryParts = query.toLowerCase().split(' ');
-    
-    realAddresses.forEach((address, index) => {
+    return realAddresses.filter((address, index) => {
       const fullAddressLower = `${address.streetNumber} ${address.street} ${address.city} ${address.state} ${address.zip}`.toLowerCase();
       const streetAddressLower = `${address.streetNumber} ${address.street}`.toLowerCase();
       
       if (query.includes('1002') && query.includes('farm') && query.includes('lane')) {
-        results.push({
-          id: `real-${index}`,
-          name: `${address.streetNumber} ${address.street}`,
-          address: `${address.streetNumber} ${address.street}, ${address.city}, ${address.state} ${address.zip}`,
-          placeId: `place_real_${index}`
-        });
-        return;
+        return true;
       }
       
-      const allPartsMatch = queryParts.every(part => fullAddressLower.includes(part));
-      
-      const isStreetMatch = streetAddressLower.includes(query) || queryParts.every(part => streetAddressLower.includes(part));
+      const allPartsMatch = query.split(' ').every(part => fullAddressLower.includes(part));
+      const isStreetMatch = streetAddressLower.includes(query) || query.split(' ').every(part => streetAddressLower.includes(part));
       
       if (allPartsMatch || isStreetMatch) {
-        results.push({
-          id: `real-${index}`,
-          name: `${address.streetNumber} ${address.street}`,
-          address: `${address.streetNumber} ${address.street}, ${address.city}, ${address.state} ${address.zip}`,
-          placeId: `place_real_${index}`
-        });
+        return true;
       }
-    });
-    
-    return results;
+      
+      return false;
+    }).map((address, index) => ({
+      id: `real-${index}`,
+      name: `${address.streetNumber} ${address.street}`,
+      address: `${address.streetNumber} ${address.street}, ${address.city}, ${address.state} ${address.zip}`,
+      placeId: `place_real_${index}`
+    }));
   };
 
   const generateAddressSuggestions = (query: string): LocationResult[] => {
@@ -211,7 +203,10 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   const handleLocationSelect = (location: LocationResult) => {
     onLocationChange(location.address);
     setSearchText(location.address);
-    setIsSearchOpen(false);
+    setShowResults(false);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -220,11 +215,10 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     onLocationChange(value);
     
     if (value.trim().length > 1) {
-      setIsSearchOpen(true);
+      setShowResults(true);
+    } else {
+      setShowResults(false);
     }
-  };
-
-  const handleInputBlur = () => {
   };
 
   const getCurrentLocation = () => {
@@ -248,7 +242,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         const mockAddress = "1002 Farm Lane, West Chester, PA 19383";
         onLocationChange(mockAddress);
         setSearchText(mockAddress);
-        setIsSearchOpen(false);
+        setShowResults(false);
         toast({
           title: "Location detected",
           description: "Your current location has been set"
@@ -281,72 +275,93 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     });
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        resultsContainerRef.current && 
+        !resultsContainerRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium">Location</label>
-      <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-        <PopoverTrigger asChild>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Enter any address worldwide" 
-              value={searchText} 
-              className="pl-9 pr-10" 
-              onChange={handleInputChange}
-              onFocus={() => {
-                if (searchText.trim().length > 1 && locationResults.length > 0) {
-                  setIsSearchOpen(true);
-                }
-              }}
-            />
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="icon" 
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8" 
-              onClick={getCurrentLocation} 
-              disabled={isLocating}
-            >
-              {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
-            </Button>
-          </div>
-        </PopoverTrigger>
-        <PopoverContent 
-          className="p-0 w-[calc(100vw-2rem)] max-w-lg" 
-          align="start" 
-          sideOffset={5}
-          onInteractOutside={() => setIsSearchOpen(false)}
+      <div className="relative">
+        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input 
+          ref={inputRef}
+          placeholder="Enter any address worldwide" 
+          value={searchText} 
+          className="pl-9 pr-10" 
+          onChange={handleInputChange}
+          onFocus={() => {
+            if (searchText.trim().length > 1 && locationResults.length > 0) {
+              setShowResults(true);
+            }
+          }}
+          onClick={() => {
+            if (searchText.trim().length > 1 && locationResults.length > 0) {
+              setShowResults(true);
+            }
+          }}
+        />
+        <Button 
+          type="button" 
+          variant="ghost" 
+          size="icon" 
+          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8" 
+          onClick={getCurrentLocation} 
+          disabled={isLocating}
         >
-          {isSearching ? (
-            <div className="p-4 text-center">
-              <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Searching locations worldwide...</p>
-            </div>
-          ) : (
-            <div className="max-h-[300px] overflow-y-auto">
-              {locationResults && locationResults.length > 0 ? (
-                locationResults.map(location => (
-                  <div 
-                    key={location.id} 
-                    onClick={() => handleLocationSelect(location)} 
-                    className="relative flex cursor-pointer select-none items-center px-4 py-3 text-sm outline-none hover:bg-muted/50 border-b last:border-b-0 "
-                  >
-                    <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <div className="flex flex-col overflow-hidden">
-                      <span className="font-medium truncate">{location.name}</span>
-                      <span className="text-xs text-muted-foreground truncate">{location.address}</span>
+          {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
+        </Button>
+        
+        {showResults && (
+          <div 
+            ref={resultsContainerRef}
+            className="absolute z-50 w-full mt-1 bg-popover rounded-md border shadow-md"
+          >
+            {isSearching ? (
+              <div className="p-4 text-center">
+                <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Searching locations worldwide...</p>
+              </div>
+            ) : (
+              <div className="max-h-[300px] overflow-y-auto">
+                {locationResults && locationResults.length > 0 ? (
+                  locationResults.map(location => (
+                    <div 
+                      key={location.id} 
+                      onClick={() => handleLocationSelect(location)} 
+                      className="relative flex cursor-pointer select-none items-center px-4 py-3 text-sm outline-none hover:bg-muted/50 border-b last:border-b-0"
+                    >
+                      <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="font-medium truncate">{location.name}</span>
+                        <span className="text-xs text-muted-foreground truncate">{location.address}</span>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center">
+                    <p className="text-sm text-muted-foreground">No locations found</p>
                   </div>
-                ))
-              ) : (
-                <div className="p-4 text-center">
-                  <p className="text-sm text-muted-foreground">No locations found</p>
-                </div>
-              )}
-            </div>
-          )}
-        </PopoverContent>
-      </Popover>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       <p className="text-xs text-muted-foreground">
         Enter any address worldwide or use your current location
       </p>
