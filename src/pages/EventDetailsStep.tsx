@@ -58,7 +58,6 @@ const EventDetailsStep = () => {
 
       try {
         // Simulate Google Maps Geocoding API call
-        // In production, replace this with actual geocoding API call
         await new Promise(resolve => setTimeout(resolve, 500));
         
         // Generate realistic-looking address suggestions based on input
@@ -68,51 +67,49 @@ const EventDetailsStep = () => {
         const mockResults: LocationResult[] = [];
         
         // Add some standard address types based on the query
-        if (query.includes('main') || query.length > 3) {
-          mockResults.push({
-            id: '1',
-            name: `${query.charAt(0).toUpperCase() + query.slice(1)} Street`,
-            address: `${Math.floor(Math.random() * 1000) + 1} ${query.charAt(0).toUpperCase() + query.slice(1)} Street, New York, NY`,
-            placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-          });
+        if (query.length > 1) {
+          const streetTypes = ['Street', 'Avenue', 'Boulevard', 'Road', 'Lane', 'Drive'];
+          const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia'];
+          const states = ['NY', 'CA', 'IL', 'TX', 'AZ', 'PA'];
+          
+          // Generate various address suggestions
+          for (let i = 0; i < 5; i++) {
+            const streetType = streetTypes[i % streetTypes.length];
+            const city = cities[i % cities.length];
+            const state = states[i % states.length];
+            const streetNumber = Math.floor(Math.random() * 1000) + 1;
+            
+            mockResults.push({
+              id: `${i}`,
+              name: `${query.charAt(0).toUpperCase() + query.slice(1)} ${streetType}`,
+              address: `${streetNumber} ${query.charAt(0).toUpperCase() + query.slice(1)} ${streetType}, ${city}, ${state}`,
+              placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+            });
+          }
+          
+          // Also add some landmarks or places
+          if (query.length > 2) {
+            mockResults.push({
+              id: '5',
+              name: `${query.charAt(0).toUpperCase() + query.slice(1)} Mall`,
+              address: `${query.charAt(0).toUpperCase() + query.slice(1)} Mall, 1000 Shopping Center Dr, Boston, MA`,
+              placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+            });
+            
+            mockResults.push({
+              id: '6',
+              name: `${query.charAt(0).toUpperCase() + query.slice(1)} Park`,
+              address: `${query.charAt(0).toUpperCase() + query.slice(1)} Park, 200 Park Ave, San Francisco, CA`,
+              placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+            });
+          }
         }
         
-        if (query.length > 2) {
-          mockResults.push({
-            id: '2',
-            name: `${query.charAt(0).toUpperCase() + query.slice(1)} Avenue`,
-            address: `${Math.floor(Math.random() * 500) + 1} ${query.charAt(0).toUpperCase() + query.slice(1)} Avenue, Chicago, IL`,
-            placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-          });
-          
-          mockResults.push({
-            id: '3',
-            name: `${query.charAt(0).toUpperCase() + query.slice(1)} Boulevard`,
-            address: `${Math.floor(Math.random() * 300) + 1} ${query.charAt(0).toUpperCase() + query.slice(1)} Boulevard, Los Angeles, CA`,
-            placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-          });
-          
-          mockResults.push({
-            id: '4',
-            name: `${query.charAt(0).toUpperCase() + query.slice(1)} Plaza`,
-            address: `${query.charAt(0).toUpperCase() + query.slice(1)} Plaza, San Francisco, CA`,
-            placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-          });
-          
-          // Add a specific building or landmark
-          mockResults.push({
-            id: '5',
-            name: `${query.charAt(0).toUpperCase() + query.slice(1)} Center`,
-            address: `${query.charAt(0).toUpperCase() + query.slice(1)} Center, 555 Business Park, Seattle, WA`,
-            placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-          });
-        }
-        
-        // Allow any full address to be entered
-        if (query.includes(' ')) {
+        // Allow any full address to be entered by adding it as an option
+        if (query.includes(' ') || query.length > 10) {
           // This enables users to manually type a complete address
-          mockResults.push({
-            id: '0',
+          mockResults.unshift({
+            id: 'custom',
             name: `Use "${eventData.location}"`,
             address: eventData.location,
             placeId: `custom_${Math.random().toString(36).substring(2, 10)}`
@@ -267,7 +264,8 @@ const EventDetailsStep = () => {
                     value={eventData.location}
                     className="pl-9 pr-10"
                     onChange={(e) => handleChange('location', e.target.value)}
-                    onFocus={() => setOpen(true)}
+                    onFocus={() => eventData.location.length > 1 && setOpen(true)}
+                    onKeyUp={() => eventData.location.length > 1 ? setOpen(true) : setOpen(false)}
                   />
                   <Button 
                     type="button" 
@@ -301,10 +299,10 @@ const EventDetailsStep = () => {
                             onClick={() => handleLocationSelect(location)}
                             className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
                           >
-                            <MapPin className="mr-2 h-4 w-4" />
-                            <div className="flex flex-col">
-                              <span className="font-medium">{location.name}</span>
-                              <span className="text-xs text-muted-foreground">{location.address}</span>
+                            <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
+                            <div className="flex flex-col overflow-hidden">
+                              <span className="font-medium truncate">{location.name}</span>
+                              <span className="text-xs text-muted-foreground truncate">{location.address}</span>
                             </div>
                           </div>
                         ))}
