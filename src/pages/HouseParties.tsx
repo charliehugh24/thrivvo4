@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -40,7 +39,6 @@ const HouseParties = () => {
     switch(selectedCategory) {
       case 'party': return "View Party Events";
       case 'sports': return "View Sports Events";
-      case 'music': return "View Music Events";
       case 'food': return "View Food Events";  
       case 'art': return "View Art Events";
       default: return `View ${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Events`;

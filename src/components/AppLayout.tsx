@@ -3,6 +3,7 @@ import React, { ReactNode } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapPin, SearchIcon, BellIcon, UserIcon, PlusIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import DirectMessages from './DirectMessages';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -37,6 +38,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
               <MapPin size={14} />
               <span>2mi</span>
             </button>
+            <DirectMessages />
           </div>
         </div>
       </header>
