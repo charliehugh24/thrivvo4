@@ -59,18 +59,19 @@ const EventDetailsStep = () => {
         
         const query = eventData.location.toLowerCase();
         
-        // Generate realistic location suggestions based on input
-        const mockResults: LocationResult[] = generateWorldwideAddresses(query);
+        // Always include "Use as entered" as first option
+        const exactAddressOption: LocationResult = {
+          id: 'custom',
+          name: `Use "${eventData.location}"`,
+          address: eventData.location,
+          placeId: `custom_${Math.random().toString(36).substring(2, 10)}`
+        };
         
-        // Add "Use as entered" option for convenience
-        if (query.length > 2) {
-          mockResults.unshift({
-            id: 'custom',
-            name: `Use "${eventData.location}"`,
-            address: eventData.location,
-            placeId: `custom_${Math.random().toString(36).substring(2, 10)}`
-          });
-        }
+        // Generate enhanced worldwide location suggestions based on input
+        let mockResults: LocationResult[] = generateEnhancedAddresses(query);
+        
+        // Add exact address as first option always
+        mockResults = [exactAddressOption, ...mockResults];
         
         setLocationResults(mockResults);
       } catch (error) {
@@ -93,66 +94,106 @@ const EventDetailsStep = () => {
     return () => clearTimeout(timer);
   }, [eventData.location, toast, inputFocused]);
 
-  // Generate worldwide address suggestions based on user input
-  const generateWorldwideAddresses = (query: string): LocationResult[] => {
+  // Enhanced address generator with more specific formats and variety
+  const generateEnhancedAddresses = (query: string): LocationResult[] => {
     const results: LocationResult[] = [];
     
-    // Generate addresses in different formats for different regions
-    // North America style
-    results.push({
-      id: `na-${Math.random().toString(36).substring(2, 10)}`,
-      name: `${query.charAt(0).toUpperCase() + query.slice(1)} Street`,
-      address: `123 ${query.charAt(0).toUpperCase() + query.slice(1)} St, New York, NY 10001, USA`,
-      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+    // Parse the query to better detect street name, city, etc.
+    const parts = query.split(',').map(part => part.trim());
+    const mainPart = parts[0].toLowerCase();
+    
+    // Check if this looks like a specific street address (has numbers)
+    const hasNumbers = /\d/.test(mainPart);
+    
+    // If it looks like a specific address with numbers
+    if (hasNumbers) {
+      // Try to extract the street name
+      const streetMatch = mainPart.match(/\d+\s+(.*)/);
+      const streetName = streetMatch ? streetMatch[1] : mainPart;
+      
+      // Generate variations based on the exact address entered
+      results.push({
+        id: `exact-${Math.random().toString(36).substring(2, 10)}`,
+        name: mainPart,
+        address: query,
+        placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+      });
+      
+      // Nearby addresses on same street
+      const houseNumber = parseInt(mainPart.match(/\d+/)?.[0] || "100");
+      
+      [-2, 2, 4].forEach(offset => {
+        const newNumber = houseNumber + offset;
+        results.push({
+          id: `nearby-${Math.random().toString(36).substring(2, 10)}`,
+          name: `${newNumber} ${streetName}`,
+          address: `${newNumber} ${streetName}${parts.length > 1 ? ', ' + parts.slice(1).join(', ') : ''}`,
+          placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+        });
+      });
+    }
+    
+    // Generate specific addresses based on commonly searched formats
+    
+    // North America style addresses
+    ["Street", "Avenue", "Boulevard", "Road", "Drive", "Lane", "Place"].forEach((streetType, i) => {
+      if (i < 3 || results.length < 8) { // Limit number of results
+        results.push({
+          id: `na-${Math.random().toString(36).substring(2, 10)}`,
+          name: `${mainPart.charAt(0).toUpperCase() + mainPart.slice(1)} ${streetType}`,
+          address: `${Math.floor(Math.random() * 1000) + 1} ${mainPart.charAt(0).toUpperCase() + mainPart.slice(1)} ${streetType}, 
+          ${parts[1] ? parts[1].charAt(0).toUpperCase() + parts[1].slice(1) : "West Chester"}, 
+          ${parts[2] ? parts[2].toUpperCase() : "PA"} ${Math.floor(Math.random() * 90000) + 10000}`,
+          placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+        });
+      }
     });
     
-    // European style
-    results.push({
-      id: `eu-${Math.random().toString(36).substring(2, 10)}`,
-      name: `${query.charAt(0).toUpperCase() + query.slice(1)}straße`,
-      address: `${query.charAt(0).toUpperCase() + query.slice(1)}straße 42, 10115 Berlin, Germany`,
-      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-    });
+    // Add specific place if user might be searching for it
+    if (parts.length > 1) {
+      const cityPart = parts[1].trim().toLowerCase();
+      const statePart = parts.length > 2 ? parts[2].trim().toLowerCase() : "";
+      
+      // If we have city/state info, add a landmark there
+      if (cityPart) {
+        results.push({
+          id: `landmark-${Math.random().toString(36).substring(2, 10)}`,
+          name: `${mainPart.charAt(0).toUpperCase() + mainPart.slice(1)} Park`,
+          address: `${mainPart.charAt(0).toUpperCase() + mainPart.slice(1)} Memorial Park, 
+          ${cityPart.charAt(0).toUpperCase() + cityPart.slice(1)}${statePart ? ', ' + statePart.toUpperCase() : ''}`,
+          placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+        });
+      }
+    }
     
-    // UK style
-    results.push({
-      id: `uk-${Math.random().toString(36).substring(2, 10)}`,
-      name: `${query.charAt(0).toUpperCase() + query.slice(1)} Road`,
-      address: `45 ${query.charAt(0).toUpperCase() + query.slice(1)} Road, London SW1A 1AA, UK`,
-      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-    });
-    
-    // Asian style
-    results.push({
-      id: `as-${Math.random().toString(36).substring(2, 10)}`,
-      name: `${query.charAt(0).toUpperCase() + query.slice(1)} Street`,
-      address: `Block 123, ${query.charAt(0).toUpperCase() + query.slice(1)} Street, Tokyo 100-0001, Japan`,
-      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-    });
-    
-    // Latin American style
-    results.push({
-      id: `la-${Math.random().toString(36).substring(2, 10)}`,
-      name: `Calle ${query.charAt(0).toUpperCase() + query.slice(1)}`,
-      address: `Calle ${query.charAt(0).toUpperCase() + query.slice(1)} #123, Col. Centro, Mexico City 06000, Mexico`,
-      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-    });
-    
-    // African style
-    results.push({
-      id: `af-${Math.random().toString(36).substring(2, 10)}`,
-      name: `${query.charAt(0).toUpperCase() + query.slice(1)} Avenue`,
-      address: `${query.charAt(0).toUpperCase() + query.slice(1)} Avenue, Nairobi 00100, Kenya`,
-      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-    });
-    
-    // Add a POI (Point of Interest)
-    results.push({
-      id: `poi-${Math.random().toString(36).substring(2, 10)}`,
-      name: `${query.charAt(0).toUpperCase() + query.slice(1)} Mall`,
-      address: `${query.charAt(0).toUpperCase() + query.slice(1)} Shopping Center, 888 Market St, Sydney NSW 2000, Australia`,
-      placeId: `place_${Math.random().toString(36).substring(2, 10)}`
-    });
+    // If very few specific results, add generic worldwide examples
+    if (results.length < 5) {
+      // Global regions with different address formats
+      const regions = [
+        { name: "USA", city: "New York", format: "## STREET St, CITY, NY 10001" },
+        { name: "UK", city: "London", format: "## STREET Rd, CITY SW1A 1AA" },
+        { name: "Germany", city: "Berlin", format: "STREETstraße ##, 10115 CITY" },
+        { name: "France", city: "Paris", format: "## rue de STREET, 75001 CITY" },
+        { name: "Japan", city: "Tokyo", format: "STREET Building ##, CITY 100-0001" },
+        { name: "Australia", city: "Sydney", format: "## STREET St, CITY NSW 2000" }
+      ];
+      
+      regions.forEach(region => {
+        if (results.length < 10) {
+          let formatted = region.format
+            .replace('STREET', mainPart.charAt(0).toUpperCase() + mainPart.slice(1))
+            .replace('##', (Math.floor(Math.random() * 300) + 1).toString())
+            .replace('CITY', region.city);
+          
+          results.push({
+            id: `${region.name.toLowerCase()}-${Math.random().toString(36).substring(2, 10)}`,
+            name: `${mainPart.charAt(0).toUpperCase() + mainPart.slice(1)} (${region.city})`,
+            address: formatted,
+            placeId: `place_${Math.random().toString(36).substring(2, 10)}`
+          });
+        }
+      });
+    }
     
     return results;
   };
@@ -275,7 +316,7 @@ const EventDetailsStep = () => {
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Type any address worldwide" 
+                placeholder="Enter any address worldwide" 
                 value={eventData.location}
                 className="pl-9 pr-10"
                 onChange={(e) => {
