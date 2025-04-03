@@ -6,7 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import EventCard from '@/components/EventCard'; // Fixed: Changed from named import to default import
+import EventCard from '@/components/EventCard';
+import EventList from '@/components/EventList';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Edit, Save, Calendar } from 'lucide-react';
@@ -37,6 +38,12 @@ const Profile = () => {
   const [profile, setProfile] = useState(profileData);
   const [formData, setFormData] = useState(profileData);
   const [activeTab, setActiveTab] = useState("about");
+  const [eventsSubTab, setEventsSubTab] = useState("myEvents");
+
+  // Filter events created by the current user (using the mock user ID for now)
+  // In a real app, you would compare against the actual logged-in user ID
+  const createdEvents = mockEvents.filter(event => event.host.id === "user-1");
+  const attendingEvents = mockEvents.slice(0, 3); // Just using some events for demo
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
@@ -232,22 +239,62 @@ const Profile = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => navigate('/create-event')}
+                onClick={() => navigate('/add-event')}
               >
                 Create Event
               </Button>
             </div>
             
-            <div className="space-y-4">
-              {mockEvents.slice(0, 3).map((event: Event) => (
-                <EventCard 
-                  key={event.id} 
-                  event={event}
-                  onSwipeLeft={handleSwipeLeft}
-                  onSwipeRight={handleSwipeRight}
-                />
-              ))}
+            {/* Sub-tabs for Events created vs Events attending */}
+            <div className="border-b">
+              <div className="flex space-x-4">
+                <button
+                  className={`pb-2 px-1 text-sm ${eventsSubTab === 'myEvents' ? 'border-b-2 border-thrivvo-teal text-thrivvo-teal font-medium' : 'text-muted-foreground'}`}
+                  onClick={() => setEventsSubTab('myEvents')}
+                >
+                  Events I Created
+                </button>
+                <button
+                  className={`pb-2 px-1 text-sm ${eventsSubTab === 'attending' ? 'border-b-2 border-thrivvo-teal text-thrivvo-teal font-medium' : 'text-muted-foreground'}`}
+                  onClick={() => setEventsSubTab('attending')}
+                >
+                  Events I'm Attending
+                </button>
+              </div>
             </div>
+            
+            {/* Events content based on sub-tab */}
+            {eventsSubTab === 'myEvents' ? (
+              <div className="space-y-4">
+                {createdEvents.length > 0 ? (
+                  <EventList 
+                    events={createdEvents} 
+                    emptyMessage="You haven't created any events yet" 
+                  />
+                ) : (
+                  <div className="text-center p-8">
+                    <h3 className="text-lg font-medium">You haven't created any events yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Create your first event to share with others
+                    </p>
+                    <Button onClick={() => navigate('/add-event')}>
+                      Create Event
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {attendingEvents.map((event: Event) => (
+                  <EventCard 
+                    key={event.id} 
+                    event={event}
+                    onSwipeLeft={handleSwipeLeft}
+                    onSwipeRight={handleSwipeRight}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
