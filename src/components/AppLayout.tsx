@@ -4,11 +4,13 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SearchIcon, BellIcon, UserIcon, PlusIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DirectMessages from './DirectMessages';
+
 interface AppLayoutProps {
   children: ReactNode;
   activeTab?: string;
   onTabChange?: (value: string) => void;
 }
+
 const AppLayout: React.FC<AppLayoutProps> = ({
   children,
   activeTab = 'discover',
@@ -50,7 +52,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                   <img 
                     src="/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png" 
                     alt="Thrivvo Logo" 
-                    className="h-5 w-5" 
+                    className="h-6 w-6" 
                   />
                 </Link>
               </TabsTrigger>
@@ -80,4 +82,5 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       </footer>
     </div>;
 };
+
 export default AppLayout;
