@@ -24,16 +24,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <div className="flex items-center text-sm text-muted-foreground gap-1">
-                <div className="relative">
-                  <img src="/lovable-uploads/8772df01-f105-4eae-aa70-173c7563a131.png" alt="Location Pin" className="h-7 w-7" />
-                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 translate-y-[-30%] text-xs font-medium text-white">
-                    2mi
-                  </span>
-                </div>
-              </div>
-            </div>
             <DirectMessages />
           </div>
         </div>
