@@ -19,8 +19,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   return <div className="flex flex-col min-h-screen max-w-lg mx-auto">
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
         <div className="flex items-center justify-between p-4">
-          <div className="w-8 h-8 invisible">
-            {/* Placeholder for spacing */}
+          <div className="text-thrivvo-orange text-xl font-bold">
+            THRIVVO
           </div>
           
           <div className="flex items-center gap-2">
