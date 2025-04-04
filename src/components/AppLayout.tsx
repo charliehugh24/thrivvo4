@@ -1,3 +1,4 @@
+
 import React, { ReactNode } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SearchIcon, BellIcon, UserIcon, PlusIcon } from 'lucide-react';
@@ -45,8 +46,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
             <TabsList className="w-full bg-muted/50">
               <TabsTrigger value="discover" className="flex-1 data-[state=active]:bg-thrivvo-teal data-[state=active]:text-white" asChild>
-                <Link to="/" className="I want the logo to be in this box\n">
-                  <SearchIcon size={20} className="I want the" />
+                <Link to="/">
+                  <img 
+                    src="/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png" 
+                    alt="Thrivvo Logo" 
+                    className="h-5 w-5" 
+                  />
                 </Link>
               </TabsTrigger>
               <TabsTrigger value="search" className="flex-1 data-[state=active]:bg-thrivvo-teal data-[state=active]:text-white" asChild>
