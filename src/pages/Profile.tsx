@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +9,7 @@ import EventCard from '@/components/EventCard';
 import EventList from '@/components/EventList';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Edit, Save, Calendar } from 'lucide-react';
+import { Edit, Save, Calendar, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Temporary mock data for the profile
@@ -110,7 +110,13 @@ const Profile = () => {
 
         {/* Profile info */}
         <div className="flex flex-col items-center space-y-4">
-          {/* Avatar has been removed */}
+          <div className="flex justify-center w-full">
+            <Avatar className="w-24 h-24 border-2 border-thrivvo-teal bg-background flex items-center justify-center cursor-pointer hover:bg-muted transition-colors">
+              <AvatarFallback className="bg-transparent">
+                <Plus className="w-8 h-8 text-thrivvo-teal" />
+              </AvatarFallback>
+            </Avatar>
+          </div>
           
           {isEditing ? (
             <div className="w-full space-y-3">
