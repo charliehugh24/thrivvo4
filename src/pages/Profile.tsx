@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -111,12 +110,7 @@ const Profile = () => {
 
         {/* Profile info */}
         <div className="flex flex-col items-center space-y-4">
-          <div className="flex justify-center w-full">
-            <Avatar className="w-24 h-24 border-4 border-thrivvo-teal flex items-center justify-center">
-              <AvatarImage src={profile.avatar} alt={profile.name} className="object-center" />
-              <AvatarFallback>{profile.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
-          </div>
+          {/* Avatar has been removed */}
           
           {isEditing ? (
             <div className="w-full space-y-3">
