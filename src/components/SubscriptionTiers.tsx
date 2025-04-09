@@ -128,7 +128,7 @@ const SubscriptionTiers: React.FC = () => {
             <CardHeader>
               <div className="flex justify-between items-center">
                 {tier.icon}
-                <div className="text-right">
+                <div className="pr-2">
                   <span className="text-2xl font-bold">${tier.price}</span>
                   <span className="text-xs text-muted-foreground">/month</span>
                 </div>
