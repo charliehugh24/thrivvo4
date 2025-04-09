@@ -21,11 +21,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
         <div className="flex items-center justify-between p-4">
           <div>
-            <img 
-              src="/lovable-uploads/130ab7bf-f6ad-4a28-8c87-4a266c70a707.png" 
-              alt="THRIVVO Logo" 
-              className="h-8" 
-            />
+            <Link to="/">
+              <img 
+                src="/lovable-uploads/130ab7bf-f6ad-4a28-8c87-4a266c70a707.png" 
+                alt="THRIVVO Logo" 
+                className="h-8 cursor-pointer" 
+              />
+            </Link>
           </div>
           
           <div className="flex items-center gap-2">
