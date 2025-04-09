@@ -231,6 +231,11 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }
     savedData?.chatHistory || mockChatHistory
   );
   
+  // Filter conversations to only show those with messages
+  const activeConversations = conversations.filter(conv => 
+    chatHistory[conv.id] && chatHistory[conv.id].length > 0
+  );
+  
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -411,6 +416,9 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }
     setIsOpen(false);
   };
 
+  // Calculate unread count only for active conversations
+  const unreadCount = activeConversations.filter(c => c.unread).length;
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -420,9 +428,9 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }
           className="h-8 w-8 bg-muted/50"
         >
           <MessageSquare size={16} />
-          {conversations.some(c => c.unread) && (
+          {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-thrivvo-orange text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-              {conversations.filter(c => c.unread).length}
+              {unreadCount}
             </span>
           )}
         </Button>
@@ -452,34 +460,42 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }
         {!activeConversation ? (
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-2">
-              {conversations.map((conversation) => (
-                <div 
-                  key={conversation.id}
-                  onClick={() => handleOpenConversation(conversation.id)}
-                  className={`flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-muted/50 ${conversation.unread ? 'bg-muted/30' : ''}`}
-                >
-                  <Avatar className="h-10 w-10 flex-shrink-0">
-                    <AvatarImage src={conversation.user.avatar} />
-                    <AvatarFallback>{conversation.user.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center">
-                      <p className={`font-medium truncate ${conversation.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
-                        {conversation.user.name}
+              {activeConversations.length > 0 ? (
+                activeConversations.map((conversation) => (
+                  <div 
+                    key={conversation.id}
+                    onClick={() => handleOpenConversation(conversation.id)}
+                    className={`flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-muted/50 ${conversation.unread ? 'bg-muted/30' : ''}`}
+                  >
+                    <Avatar className="h-10 w-10 flex-shrink-0">
+                      <AvatarImage src={conversation.user.avatar} />
+                      <AvatarFallback>{conversation.user.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <p className={`font-medium truncate ${conversation.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          {conversation.user.name}
+                        </p>
+                        <span className="text-xs text-muted-foreground">
+                          {formatTime(conversation.timestamp)}
+                        </span>
+                      </div>
+                      <p className={`text-sm truncate ${conversation.unread ? 'font-medium' : 'text-muted-foreground'}`}>
+                        {conversation.lastMessage}
                       </p>
-                      <span className="text-xs text-muted-foreground">
-                        {formatTime(conversation.timestamp)}
-                      </span>
                     </div>
-                    <p className={`text-sm truncate ${conversation.unread ? 'font-medium' : 'text-muted-foreground'}`}>
-                      {conversation.lastMessage}
-                    </p>
+                    {conversation.unread && (
+                      <div className="w-2 h-2 bg-thrivvo-orange rounded-full flex-shrink-0"></div>
+                    )}
                   </div>
-                  {conversation.unread && (
-                    <div className="w-2 h-2 bg-thrivvo-orange rounded-full flex-shrink-0"></div>
-                  )}
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground">
+                  <MessageSquare size={40} className="mb-2 opacity-50" />
+                  <p>No conversations yet</p>
+                  <p className="text-sm mt-1">Connect with other users to start chatting</p>
                 </div>
-              ))}
+              )}
             </div>
           </ScrollArea>
         ) : (
