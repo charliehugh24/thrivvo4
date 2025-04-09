@@ -118,7 +118,7 @@ const SubscriptionTiers: React.FC = () => {
         {tiers.map((tier) => (
           <Card 
             key={tier.id}
-            className={`flex flex-col ${tier.popular ? 'border-thrivvo-orange ring-2 ring-thrivvo-orange/20' : ''}`}
+            className="flex flex-col"
           >
             {tier.popular && (
               <div className="bg-thrivvo-orange text-white text-xs font-medium py-1 px-3 absolute right-4 rounded-b-md">
