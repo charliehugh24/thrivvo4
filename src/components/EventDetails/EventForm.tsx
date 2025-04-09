@@ -47,6 +47,7 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
   const { toast } = useToast();
   const [showExternalLinkDialog, setShowExternalLinkDialog] = useState(false);
   const [externalLink, setExternalLink] = useState(eventData.externalTicketLink || '');
+  const [externalLinkError, setExternalLinkError] = useState('');
 
   // Handle switch toggle for paid events
   const handleIsPaidChange = (checked: boolean) => {
@@ -68,12 +69,24 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
 
   // Save external link
   const handleSaveExternalLink = () => {
-    onDataChange('externalTicketLink', externalLink);
-    setShowExternalLinkDialog(false);
-    toast({
-      title: "External link saved",
-      description: "The external ticket link has been saved.",
-    });
+    if (!externalLink.trim()) {
+      setExternalLinkError('External ticket link is required');
+      return;
+    }
+
+    // Simple URL validation
+    try {
+      new URL(externalLink);
+      setExternalLinkError('');
+      onDataChange('externalTicketLink', externalLink);
+      setShowExternalLinkDialog(false);
+      toast({
+        title: "External link saved",
+        description: "The external ticket link has been saved.",
+      });
+    } catch (e) {
+      setExternalLinkError('Please enter a valid URL (e.g., https://example.com)');
+    }
   };
 
   return (
@@ -195,7 +208,6 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
                   <SelectItem value="none">No refunds</SelectItem>
                   <SelectItem value="24hours">Up to 24 hours before event</SelectItem>
                   <SelectItem value="48hours">Up to 48 hours before event</SelectItem>
-                  <SelectItem value="custom">Custom policy</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -210,7 +222,13 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
       </div>
 
       {/* External Ticket Link Dialog */}
-      <Dialog open={showExternalLinkDialog} onOpenChange={setShowExternalLinkDialog}>
+      <Dialog open={showExternalLinkDialog} onOpenChange={(open) => {
+        if (!open && (!eventData.externalTicketLink && eventData.ticketType === 'external')) {
+          // If closing dialog without a link, reset ticket type to digital
+          onDataChange('ticketType', 'digital');
+        }
+        setShowExternalLinkDialog(open);
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add External Ticket Link</DialogTitle>
@@ -226,12 +244,23 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
                 type="text"
                 placeholder="https://..."
                 value={externalLink}
-                onChange={(e) => setExternalLink(e.target.value)}
+                onChange={(e) => {
+                  setExternalLink(e.target.value);
+                  if (externalLinkError) setExternalLinkError('');
+                }}
               />
+              {externalLinkError && (
+                <p className="text-sm text-destructive mt-1">{externalLinkError}</p>
+              )}
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" onClick={() => setShowExternalLinkDialog(false)} variant="outline">
+            <Button type="button" onClick={() => {
+              setShowExternalLinkDialog(false);
+              if (!eventData.externalTicketLink && eventData.ticketType === 'external') {
+                onDataChange('ticketType', 'digital');
+              }
+            }} variant="outline">
               Cancel
             </Button>
             <Button type="button" onClick={handleSaveExternalLink}>
