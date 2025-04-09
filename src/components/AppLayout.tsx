@@ -1,4 +1,3 @@
-
 import React, { ReactNode } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SearchIcon, BellIcon, UserIcon, PlusIcon, CrownIcon } from 'lucide-react';
@@ -53,7 +52,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
               <TabsTrigger value="discover" className="flex-1 data-[state=active]:bg-thrivvo-teal data-[state=active]:text-white" asChild>
                 <Link to="/">
                   <img 
-                    src="/lovable-uploads/9a2151c2-f4a9-4478-af2d-a90f4e168678.png" 
+                    src="/lovable-uploads/1493954c-3788-441f-9e0a-bab1dd94c24b.png" 
                     alt="Discover" 
                     className="h-6 w-6" 
                   />
