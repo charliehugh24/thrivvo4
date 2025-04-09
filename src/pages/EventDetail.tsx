@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -12,9 +11,11 @@ import { mockEvents } from '@/data/mockData';
 import { formatDistanceToNow, format } from 'date-fns';
 import { 
   ArrowLeft, MapPin, Clock, Users, DollarSign, 
-  CalendarIcon, Share2, Heart, CheckCircle, Shield 
+  CalendarIcon, Share2, Heart, CheckCircle, Shield, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import AttendeesList from '@/components/AttendeesList';
 
 const EventDetail = () => {
   const { eventId } = useParams();
@@ -22,9 +23,9 @@ const EventDetail = () => {
   const { toast } = useToast();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAttendeesOpen, setIsAttendeesOpen] = useState(false);
 
   useEffect(() => {
-    // Check local storage for user created events first
     const userEventsString = localStorage.getItem('userCreatedEvents');
     let userEvents = [];
     if (userEventsString) {
@@ -35,7 +36,6 @@ const EventDetail = () => {
       }
     }
     
-    // Look for the event in both user created events and mock events
     const foundInUserEvents = userEvents.find((e: Event) => e.id === eventId);
     const foundInMockEvents = mockEvents.find(e => e.id === eventId);
     
@@ -119,7 +119,6 @@ const EventDetail = () => {
   return (
     <AppLayout>
       <div className="flex flex-col min-h-screen">
-        {/* Back button and header */}
         <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm p-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -144,9 +143,7 @@ const EventDetail = () => {
           </div>
         </div>
 
-        {/* Main content */}
         <div className="flex-grow">
-          {/* Cover image */}
           <div className="relative h-56 sm:h-72 md:h-80 w-full">
             <img 
               src={event.images[0]} 
@@ -163,9 +160,7 @@ const EventDetail = () => {
             </div>
           </div>
 
-          {/* Event details */}
           <div className="p-4 space-y-4">
-            {/* Title and category */}
             <div>
               <div className="flex justify-between flex-wrap gap-2">
                 <Badge className="mb-2">{event.category}</Badge>
@@ -209,7 +204,6 @@ const EventDetail = () => {
               </div>
             </div>
 
-            {/* Host info */}
             <div className="flex items-center gap-3 py-2">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={event.host.avatar} />
@@ -237,7 +231,6 @@ const EventDetail = () => {
 
             <Separator />
 
-            {/* Verification info - new section */}
             {event.isVerified && (
               <>
                 <div className="bg-muted/30 p-3 rounded-md border border-muted flex items-start gap-3">
@@ -255,7 +248,6 @@ const EventDetail = () => {
               </>
             )}
 
-            {/* Date, time, location */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="bg-muted p-2 rounded-md">
@@ -281,37 +273,53 @@ const EventDetail = () => {
 
             <Separator />
 
-            {/* Description */}
             <div>
               <h2 className="font-medium mb-2">About this event</h2>
               <p className="text-muted-foreground">{event.description}</p>
             </div>
 
-            {/* Attendees */}
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="font-medium">Attendees</h2>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Users size={14} />
-                  <span>{event.attendees.count}{event.attendees.max ? `/${event.attendees.max}` : ''}</span>
-                </div>
-              </div>
-              <div className="flex -space-x-2">
-                {/* This would show actual attendee avatars in a real app */}
-                {Array(Math.min(5, event.attendees.count)).fill(0).map((_, i) => (
-                  <Avatar key={i} className="border-2 border-background h-8 w-8">
-                    <AvatarFallback>{i + 1}</AvatarFallback>
-                  </Avatar>
-                ))}
-                {event.attendees.count > 5 && (
-                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs border-2 border-background">
-                    +{event.attendees.count - 5}
+              <Collapsible 
+                open={isAttendeesOpen} 
+                onOpenChange={setIsAttendeesOpen}
+                className="w-full"
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="font-medium">Attendees</h2>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Users size={14} />
+                      <span>{event.attendees.count}{event.attendees.max ? `/${event.attendees.max}` : ''}</span>
+                    </div>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        {isAttendeesOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </Button>
+                    </CollapsibleTrigger>
                   </div>
-                )}
-              </div>
+                </div>
+                
+                <div className="flex -space-x-2 mb-2">
+                  {Array(Math.min(5, event.attendees.count)).fill(0).map((_, i) => (
+                    <Avatar key={i} className="border-2 border-background h-8 w-8">
+                      <AvatarFallback>{i + 1}</AvatarFallback>
+                    </Avatar>
+                  ))}
+                  {event.attendees.count > 5 && (
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs border-2 border-background">
+                      +{event.attendees.count - 5}
+                    </div>
+                  )}
+                </div>
+                
+                <CollapsibleContent className="space-y-2 mt-2">
+                  <AttendeesList eventId={eventId || ''} />
+                </CollapsibleContent>
+              </Collapsible>
             </div>
 
-            {/* Vibes/Tags */}
+            <Separator />
+
             <div>
               <h2 className="font-medium mb-2">Vibe</h2>
               <div className="flex flex-wrap gap-2">
@@ -325,7 +333,6 @@ const EventDetail = () => {
           </div>
         </div>
 
-        {/* Action buttons */}
         <div className="sticky bottom-0 p-4 bg-background/80 backdrop-blur-sm border-t">
           <div className="flex items-center justify-between">
             {event.price ? (

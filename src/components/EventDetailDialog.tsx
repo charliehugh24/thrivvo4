@@ -1,13 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Event } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
-import { MapPin, Clock, Users, DollarSign, Check, Calendar, Share2 } from 'lucide-react';
+import { MapPin, Clock, Users, DollarSign, Check, Calendar, Share2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import AttendeesList from './AttendeesList';
 
 interface EventDetailDialogProps {
   event: Event | null;
@@ -21,6 +23,7 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({
   onOpenChange 
 }) => {
   const { toast } = useToast();
+  const [isAttendeesOpen, setIsAttendeesOpen] = useState(false);
   
   if (!event) return null;
   
@@ -140,6 +143,39 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({
             <h4 className="text-sm font-medium mb-1">About this event</h4>
             <p className="text-sm text-muted-foreground">{event.description}</p>
           </div>
+          
+          {/* Attendees section - new */}
+          <Collapsible 
+            open={isAttendeesOpen} 
+            onOpenChange={setIsAttendeesOpen}
+            className="w-full"
+          >
+            <div className="flex justify-between items-center">
+              <h4 className="text-sm font-medium mb-1">Who's going</h4>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  {isAttendeesOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            
+            <div className="flex -space-x-2 mb-1">
+              {Array(Math.min(5, event.attendees.count)).fill(0).map((_, i) => (
+                <Avatar key={i} className="border-2 border-background h-8 w-8">
+                  <AvatarFallback>{i + 1}</AvatarFallback>
+                </Avatar>
+              ))}
+              {event.attendees.count > 5 && (
+                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs border-2 border-background">
+                  +{event.attendees.count - 5}
+                </div>
+              )}
+            </div>
+            
+            <CollapsibleContent className="space-y-2 my-2">
+              <AttendeesList eventId={event.id || ''} />
+            </CollapsibleContent>
+          </Collapsible>
           
           {/* Vibes */}
           <div>
