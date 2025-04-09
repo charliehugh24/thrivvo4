@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import EventList from '@/components/EventList';
 import { mockEvents } from '@/data/mockData';
 import { Shield, Settings, Users, MessageCircle, UserPlus, Check } from 'lucide-react';
