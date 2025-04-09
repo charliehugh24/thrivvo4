@@ -130,7 +130,7 @@ const SubscriptionTiers: React.FC = () => {
                 {tier.icon}
                 <div className="text-right">
                   <span className="text-2xl font-bold">${tier.price}</span>
-                  <span className="text-muted-foreground">/month</span>
+                  <span className="text-xs text-muted-foreground">/month</span>
                 </div>
               </div>
               <CardTitle className="mt-2">{tier.name}</CardTitle>
