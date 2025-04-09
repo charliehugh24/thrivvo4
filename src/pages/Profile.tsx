@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -11,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Edit, Save, Calendar, Plus, Camera, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Event } from '@/types';
+import { mockEvents } from '@/data/mockData';
 
 const profileData = {
   name: "Alex Johnson",
@@ -34,7 +37,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("about");
   const [eventsSubTab, setEventsSubTab] = useState("myEvents");
   const [userCreatedEvents, setUserCreatedEvents] = useState<Event[]>([]);
-  const [attendingEvents, setAttendingEvents] = useState(mockEvents.slice(0, 3));
+  const [attendingEvents, setAttendingEvents] = useState<Event[]>(mockEvents.slice(0, 3));
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
