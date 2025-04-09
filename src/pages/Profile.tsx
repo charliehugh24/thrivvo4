@@ -21,7 +21,7 @@ const profileData = {
   bio: "Adventure seeker and music lover. Always looking for the next exciting event or concert to attend!",
   location: "San Francisco, CA",
   hashtags: ["music", "outdoors", "food", "art", "travel"],
-  avatar: "/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png",
+  avatar: "/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png",
   joinedDate: "January 2023",
   hostedEvents: 12,
   attendedEvents: 24
