@@ -51,21 +51,37 @@ const Auth = () => {
     setLoading(true);
     
     try {
+      // Sign up with auto-confirm email (signIn right after)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            email_confirmed: true
+          }
+        }
       });
       
       if (error) throw error;
       
       if (data.user) {
+        // Auto sign in after signup
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        
+        if (signInError) throw signInError;
+        
         toast({
           title: "Account created!",
-          description: "Please check your email for a confirmation link."
+          description: "You have been signed in successfully."
         });
         navigate('/welcome');
       }
     } catch (error: any) {
+      console.error("Signup error:", error);
       toast({
         title: "Error creating account",
         description: error.message || "Something went wrong",
