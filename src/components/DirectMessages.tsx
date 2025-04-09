@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { MessageSquare, Send, X } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { User } from '@/types';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // Mock messages data
 const mockConversations = [
@@ -44,6 +46,15 @@ const mockConversations = [
     unread: false,
   },
 ];
+
+// Map for mock profile IDs to conversation IDs
+const mockUserIdToConvId: Record<string, string> = {
+  'user-1': '2', // Alex Johnson
+  'user-2': '4', // Sam Rivera - will create dynamically
+  'user-3': '5', // Taylor Morgan - will create dynamically
+  'user-4': '6', // Jordan Kim - will create dynamically
+  'user-5': '7', // Casey Lopez - will create dynamically
+};
 
 interface ChatMessage {
   id: string;
@@ -158,16 +169,116 @@ const mockChatHistory: Record<string, ChatMessage[]> = {
   ],
 };
 
+// Mock user data for additional conversations
+const mockUserProfiles = {
+  'user-1': {
+    name: 'Alex Johnson',
+    avatar: '/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png',
+  },
+  'user-2': {
+    name: 'Sam Rivera',
+    avatar: null,
+  },
+  'user-3': {
+    name: 'Taylor Morgan',
+    avatar: '/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png',
+  },
+  'user-4': {
+    name: 'Jordan Kim',
+    avatar: null,
+  },
+  'user-5': {
+    name: 'Casey Lopez',
+    avatar: '/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png',
+  },
+};
+
+interface DirectMessagesProps {
+  initialConversationId?: string;
+}
+
 const formatTime = (date: Date) => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-const DirectMessages = () => {
+const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [conversations, setConversations] = useState(mockConversations);
   const [chatHistory, setChatHistory] = useState<Record<string, ChatMessage[]>>(mockChatHistory);
+  
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Check URL for message query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const messageUserId = params.get('message');
+    
+    if (messageUserId) {
+      // Open the messages dialog
+      setIsOpen(true);
+      
+      // Find or create conversation for this user
+      const convId = findOrCreateConversation(messageUserId);
+      if (convId) {
+        handleOpenConversation(convId);
+      }
+      
+      // Remove the query param
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location]);
+  
+  // Handle initial conversation if passed as prop
+  useEffect(() => {
+    if (initialConversationId) {
+      setIsOpen(true);
+      handleOpenConversation(initialConversationId);
+    }
+  }, [initialConversationId]);
+  
+  const findOrCreateConversation = (userId: string): string | null => {
+    // Check if we already have a conversation mapped for this user
+    if (mockUserIdToConvId[userId]) {
+      return mockUserIdToConvId[userId];
+    }
+    
+    // If not, check if user profile exists
+    const userProfile = mockUserProfiles[userId as keyof typeof mockUserProfiles];
+    if (!userProfile) return null;
+    
+    // Create a new conversation
+    const newConvId = `conv-${Date.now()}`;
+    
+    // Create new conversation entry
+    const newConversation = {
+      id: newConvId,
+      user: {
+        id: userId,
+        name: userProfile.name,
+        avatar: userProfile.avatar || '',
+      },
+      lastMessage: "Start a conversation...",
+      timestamp: new Date(),
+      unread: false,
+    };
+    
+    // Add to conversations list
+    setConversations(prev => [newConversation, ...prev]);
+    
+    // Add empty chat history
+    setChatHistory(prev => ({
+      ...prev,
+      [newConvId]: []
+    }));
+    
+    // Map user ID to conversation ID
+    mockUserIdToConvId[userId] = newConvId;
+    
+    return newConvId;
+  };
 
   const handleSendMessage = (conversationId: string) => {
     if (!messageText.trim()) return;

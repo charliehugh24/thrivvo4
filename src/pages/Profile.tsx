@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -129,10 +130,11 @@ const Profile = () => {
   };
 
   const handleSendMessage = () => {
-    toast({
-      title: "Message initiated",
-      description: `Started a conversation with ${profileData?.username || 'this user'}`,
-    });
+    // Navigate to the current page with a message query parameter
+    // This will be picked up by the DirectMessages component
+    if (userId) {
+      navigate(`?message=${userId}`);
+    }
   };
   
   const handleProfileUpdate = async () => {
@@ -233,15 +235,7 @@ const Profile = () => {
                 <Button 
                   variant={isFollowing ? "outline" : "default"}
                   className={isFollowing ? "bg-white" : "bg-thrivvo-teal hover:bg-thrivvo-teal/90"}
-                  onClick={() => {
-                    setIsFollowing(!isFollowing);
-                    toast({
-                      title: isFollowing ? "Unfollowed" : "Following",
-                      description: isFollowing 
-                        ? `You are no longer following ${profileData?.username || 'this user'}` 
-                        : `You are now following ${profileData?.username || 'this user'}`
-                    });
-                  }}
+                  onClick={handleFollow}
                 >
                   <Users className="h-4 w-4 mr-2" />
                   {isFollowing ? 'Following' : 'Follow'}
@@ -250,12 +244,7 @@ const Profile = () => {
                 <Button 
                   variant="outline" 
                   className="bg-white text-foreground border-input"
-                  onClick={() => {
-                    toast({
-                      title: "Message initiated",
-                      description: `Started a conversation with ${profileData?.username || 'this user'}`,
-                    });
-                  }}
+                  onClick={handleSendMessage}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Message
