@@ -9,9 +9,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EventList from '@/components/EventList';
 import { mockEvents } from '@/data/mockData';
-import { Shield, Settings, Users, MessageCircle } from 'lucide-react';
+import { Shield, Settings, Users, MessageCircle, UserPlus, Check } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import EditProfileDialog from '@/components/EditProfileDialog';
 import AccountSettingsDialog from '@/components/AccountSettingsDialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,6 +65,48 @@ const mockUsers = {
   }
 };
 
+const mockFollowers = {
+  'user-1': [
+    { id: 'user-2', name: 'Sam Rivera', avatar: 'https://randomuser.me/api/portraits/women/79.jpg' },
+    { id: 'user-3', name: 'Taylor Morgan', avatar: '/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png' },
+    { id: 'user-4', name: 'Jordan Kim', avatar: 'https://randomuser.me/api/portraits/men/52.jpg' },
+  ],
+  'user-2': [
+    { id: 'user-1', name: 'Alex Johnson', avatar: '/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png' },
+    { id: 'user-5', name: 'Casey Lopez', avatar: '/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png' },
+  ],
+  'user-3': [
+    { id: 'user-1', name: 'Alex Johnson', avatar: '/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png' },
+    { id: 'user-4', name: 'Jordan Kim', avatar: 'https://randomuser.me/api/portraits/men/52.jpg' },
+  ],
+  'user-4': [
+    { id: 'user-5', name: 'Casey Lopez', avatar: '/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png' },
+  ],
+  'user-5': [
+    { id: 'user-2', name: 'Sam Rivera', avatar: 'https://randomuser.me/api/portraits/women/79.jpg' },
+    { id: 'user-3', name: 'Taylor Morgan', avatar: '/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png' },
+  ],
+};
+
+const mockFollowing = {
+  'user-1': [
+    { id: 'user-2', name: 'Sam Rivera', avatar: 'https://randomuser.me/api/portraits/women/79.jpg' },
+    { id: 'user-3', name: 'Taylor Morgan', avatar: '/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png' },
+  ],
+  'user-2': [
+    { id: 'user-1', name: 'Alex Johnson', avatar: '/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png' },
+  ],
+  'user-3': [
+    { id: 'user-5', name: 'Casey Lopez', avatar: '/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png' },
+  ],
+  'user-4': [
+    { id: 'user-3', name: 'Taylor Morgan', avatar: '/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png' },
+  ],
+  'user-5': [
+    { id: 'user-4', name: 'Jordan Kim', avatar: 'https://randomuser.me/api/portraits/men/52.jpg' },
+  ],
+};
+
 const Profile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -73,9 +115,20 @@ const Profile = () => {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isCurrentUser, setIsCurrentUser] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Get followers and following for the current profile
+  const followers = userId && mockFollowers[userId as keyof typeof mockFollowers] 
+    ? mockFollowers[userId as keyof typeof mockFollowers] 
+    : [];
+  
+  const following = userId && mockFollowing[userId as keyof typeof mockFollowing] 
+    ? mockFollowing[userId as keyof typeof mockFollowing] 
+    : [];
   
   useEffect(() => {
     const fetchProfile = async () => {
@@ -84,6 +137,12 @@ const Profile = () => {
       try {
         if (userId && userId !== user?.id) {
           setIsCurrentUser(false);
+          
+          // Check if the current user is following this profile
+          if (userId.startsWith('user-') && user?.id) {
+            const currentUserFollowing = mockFollowing[user.id as keyof typeof mockFollowing] || [];
+            setIsFollowing(currentUserFollowing.some(f => f.id === userId));
+          }
           
           if (userId.startsWith('user-') && mockUsers[userId as keyof typeof mockUsers]) {
             setProfileData(mockUsers[userId as keyof typeof mockUsers] as ProfileData);
@@ -170,8 +229,8 @@ const Profile = () => {
   const userInterests = profileData?.interests || [];
   const isVerified = profileData?.verified || false;
   
-  const followerCount = 256;
-  const followingCount = 124;
+  const followerCount = followers.length;
+  const followingCount = following.length;
 
   return (
     <AppLayout activeTab="profile">
@@ -217,11 +276,19 @@ const Profile = () => {
             <p className="text-sm mb-3">{userBio}</p>
             
             <div className="flex items-center gap-4 text-sm my-2">
-              <div>
-                <span className="font-bold">{followerCount}</span> Followers
+              <div 
+                className="cursor-pointer hover:underline flex items-center" 
+                onClick={() => setShowFollowers(true)}
+              >
+                <span className="font-bold text-thrivvo-teal">{followerCount}</span>
+                <span className="ml-1">Followers</span>
               </div>
-              <div>
-                <span className="font-bold">{followingCount}</span> Following
+              <div 
+                className="cursor-pointer hover:underline flex items-center"
+                onClick={() => setShowFollowing(true)}
+              >
+                <span className="font-bold text-thrivvo-teal">{followingCount}</span>
+                <span className="ml-1">Following</span>
               </div>
             </div>
 
@@ -237,11 +304,20 @@ const Profile = () => {
               <div className="flex gap-2 mt-3">
                 <Button 
                   variant={isFollowing ? "outline" : "default"}
-                  className={isFollowing ? "bg-white" : "bg-thrivvo-teal hover:bg-thrivvo-teal/90"}
+                  className={isFollowing ? "bg-green-50 text-green-600 border-green-200" : "bg-thrivvo-teal hover:bg-thrivvo-teal/90"}
                   onClick={handleFollow}
                 >
-                  <Users className="h-4 w-4 mr-2" />
-                  {isFollowing ? 'Following' : 'Follow'}
+                  {isFollowing ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Following
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Follow
+                    </>
+                  )}
                 </Button>
                 
                 <Button 
@@ -331,6 +407,84 @@ const Profile = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Followers Dialog */}
+      <Dialog open={showFollowers} onOpenChange={setShowFollowers}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Followers</DialogTitle>
+          </DialogHeader>
+          
+          <div className="max-h-[60vh] overflow-y-auto">
+            {followers.length > 0 ? (
+              <div className="space-y-3 py-2">
+                {followers.map((follower) => (
+                  <div 
+                    key={follower.id} 
+                    className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-lg cursor-pointer"
+                    onClick={() => {
+                      setShowFollowers(false);
+                      navigate(`/profile/${follower.id}`);
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src={follower.avatar} />
+                        <AvatarFallback>{getInitial(follower.name)}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{follower.name}</span>
+                    </div>
+                    <Button variant="ghost" size="sm">View</Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">
+                No followers yet.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Following Dialog */}
+      <Dialog open={showFollowing} onOpenChange={setShowFollowing}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Following</DialogTitle>
+          </DialogHeader>
+          
+          <div className="max-h-[60vh] overflow-y-auto">
+            {following.length > 0 ? (
+              <div className="space-y-3 py-2">
+                {following.map((followedUser) => (
+                  <div 
+                    key={followedUser.id} 
+                    className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-lg cursor-pointer"
+                    onClick={() => {
+                      setShowFollowing(false);
+                      navigate(`/profile/${followedUser.id}`);
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src={followedUser.avatar} />
+                        <AvatarFallback>{getInitial(followedUser.name)}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{followedUser.name}</span>
+                    </div>
+                    <Button variant="ghost" size="sm">View</Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">
+                Not following anyone yet.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
       
       <EditProfileDialog 
         open={isEditProfileOpen} 

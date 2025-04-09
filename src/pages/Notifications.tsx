@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { mockEvents } from '@/data/mockData';
@@ -9,10 +9,12 @@ import { toast } from '@/hooks/use-toast';
 
 const Notifications = () => {
   const navigate = useNavigate();
+  const [acceptedNotifications, setAcceptedNotifications] = useState<string[]>([]);
+  const [followedUsers, setFollowedUsers] = useState<string[]>([]);
   
   // Mock data - in a real app this would come from user's data in a database
   const signedUpEvents = mockEvents.slice(0, 3); // First 3 events as example
-  const followedUsers = [
+  const suggestedUsers = [
     { id: 'user-2', name: 'Sam Rivera', avatar: 'https://randomuser.me/api/portraits/women/79.jpg' },
     { id: 'user-4', name: 'Jordan Kim', avatar: 'https://randomuser.me/api/portraits/men/52.jpg' },
   ];
@@ -42,13 +44,24 @@ const Notifications = () => {
   };
   
   const handleFollowUser = (userId: string) => {
-    toast({
-      title: "User followed!",
-      description: "You'll receive notifications when they post new events.",
-    });
+    // Toggle follow status
+    if (followedUsers.includes(userId)) {
+      setFollowedUsers(prev => prev.filter(id => id !== userId));
+      toast({
+        title: "Unfollowed",
+        description: "You're no longer following this user.",
+      });
+    } else {
+      setFollowedUsers(prev => [...prev, userId]);
+      toast({
+        title: "Following!",
+        description: "You'll receive notifications when they post new events.",
+      });
+    }
   };
   
   const handleAcceptInvite = (notificationId: string) => {
+    setAcceptedNotifications(prev => [...prev, notificationId]);
     toast({
       title: "Invite accepted!",
       description: "You've been added to the event.",
@@ -103,19 +116,37 @@ const Notifications = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => handleMessageUser(notification.from.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMessageUser(notification.from.id);
+                      }}
                     >
                       <MessageCircle size={16} className="mr-1" />
                       Message
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleAcceptInvite(notification.id)}
-                    >
-                      <Check size={16} className="mr-1" />
-                      Accept
-                    </Button>
+                    {acceptedNotifications.includes(notification.id) ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="bg-green-50 text-green-600 border-green-200"
+                        disabled
+                      >
+                        <Check size={16} className="mr-1" />
+                        Accepted
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAcceptInvite(notification.id);
+                        }}
+                      >
+                        <Check size={16} className="mr-1" />
+                        Accept
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -172,7 +203,7 @@ const Notifications = () => {
             People You Might Know
           </h2>
           <div className="space-y-4">
-            {followedUsers.map((user) => (
+            {suggestedUsers.map((user) => (
               <div key={user.id} className="bg-muted/50 rounded-lg p-4 flex items-center justify-between">
                 <div 
                   className="flex items-center gap-3 cursor-pointer" 
@@ -202,17 +233,32 @@ const Notifications = () => {
                     <MessageCircle size={16} className="mr-1" />
                     Message
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleFollowUser(user.id);
-                    }}
-                  >
-                    <UserPlus size={16} className="mr-1" />
-                    Follow
-                  </Button>
+                  {followedUsers.includes(user.id) ? (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="bg-green-50 text-green-600 border-green-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFollowUser(user.id);
+                      }}
+                    >
+                      <Check size={16} className="mr-1" />
+                      Following
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFollowUser(user.id);
+                      }}
+                    >
+                      <UserPlus size={16} className="mr-1" />
+                      Follow
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
