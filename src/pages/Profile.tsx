@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -11,108 +12,113 @@ import { mockEvents } from '@/data/mockData';
 import { Shield, Settings, Users, MessageCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
-
-const currentUser = {
-  id: 'current-user',
-  name: 'Jamie Smith',
-  avatar: '/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png',
-  bio: 'Event lover and social butterfly 🦋',
-  location: 'San Francisco, CA',
-  verified: true,
-  followers: 256,
-  following: 124,
-  interests: ['music', 'food', 'travel', 'art', 'fitness']
-};
-
-const mockUsers = [
-  {
-    id: 'user-1',
-    name: 'Alex Johnson',
-    avatar: '/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png',
-    bio: 'Adventure seeker and music lover',
-    location: 'Los Angeles, CA',
-    verified: true,
-    followers: 342,
-    following: 211,
-    interests: ['music', 'hiking', 'photography']
-  },
-  {
-    id: 'user-2',
-    name: 'Sam Rivera',
-    avatar: '',
-    bio: 'Food enthusiast and traveler',
-    location: 'New York, NY',
-    verified: false,
-    followers: 189,
-    following: 156,
-    interests: ['food', 'travel', 'cooking']
-  },
-  {
-    id: 'user-3',
-    name: 'Taylor Morgan',
-    avatar: '/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png',
-    bio: 'Tech geek and coffee addict',
-    location: 'Seattle, WA',
-    verified: true,
-    followers: 423,
-    following: 267,
-    interests: ['technology', 'coffee', 'gaming']
-  },
-  {
-    id: 'user-4',
-    name: 'Jordan Kim',
-    avatar: '',
-    bio: 'Fitness instructor and wellness coach',
-    location: 'Chicago, IL',
-    verified: false,
-    followers: 512,
-    following: 298,
-    interests: ['fitness', 'nutrition', 'meditation']
-  },
-  {
-    id: 'user-5',
-    name: 'Casey Lopez',
-    avatar: '/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png',
-    bio: 'Artist and creative mind',
-    location: 'Austin, TX',
-    verified: false,
-    followers: 276,
-    following: 184,
-    interests: ['art', 'design', 'music']
-  }
-];
-
-const allUsers = [currentUser, ...mockUsers];
+import EditProfileDialog from '@/components/EditProfileDialog';
+import AccountSettingsDialog from '@/components/AccountSettingsDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Profile = () => {
   const { userId } = useParams();
-  const [user, setUser] = useState(currentUser);
+  const navigate = useNavigate();
+  const { user, profile: authProfile, refreshProfile } = useAuth();
+  
+  const [profileData, setProfileData] = useState<any | null>(null);
   const [isCurrentUser, setIsCurrentUser] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    if (userId) {
-      const foundUser = allUsers.find(u => u.id === userId);
-      if (foundUser) {
-        setUser(foundUser);
-        setIsCurrentUser(foundUser.id === currentUser.id);
+    const fetchProfile = async () => {
+      setLoading(true);
+      
+      try {
+        if (userId && userId !== user?.id) {
+          setIsCurrentUser(false);
+          
+          // Fetch the other user's profile
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+          
+          if (error) throw error;
+          setProfileData(data);
+        } else {
+          setIsCurrentUser(true);
+          setProfileData(authProfile);
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        toast({
+          title: "Error loading profile",
+          description: "The requested profile could not be loaded",
+          variant: "destructive"
+        });
+        navigate('/profile');
+      } finally {
+        setLoading(false);
       }
-    } else {
-      setUser(currentUser);
-      setIsCurrentUser(true);
+    };
+    
+    if (user) {
+      fetchProfile();
     }
-  }, [userId]);
+  }, [userId, user, authProfile, navigate]);
   
   const handleFollow = () => {
     setIsFollowing(!isFollowing);
+    toast({
+      title: isFollowing ? "Unfollowed" : "Following",
+      description: isFollowing 
+        ? `You are no longer following ${profileData?.username || 'this user'}` 
+        : `You are now following ${profileData?.username || 'this user'}`
+    });
   };
 
   const handleSendMessage = () => {
     toast({
       title: "Message initiated",
-      description: `Started a conversation with ${user.name}`,
+      description: `Started a conversation with ${profileData?.username || 'this user'}`,
     });
   };
+  
+  const handleProfileUpdate = async () => {
+    await refreshProfile();
+  };
+  
+  const getInitial = (name: string | null | undefined) => {
+    if (!name) return '?';
+    return name.charAt(0).toUpperCase();
+  };
+  
+  if (loading) {
+    return (
+      <AppLayout activeTab="profile">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-pulse space-y-4">
+            <div className="h-12 w-12 bg-muted rounded-full mx-auto"></div>
+            <div className="h-4 w-40 bg-muted rounded mx-auto"></div>
+            <div className="h-3 w-20 bg-muted rounded mx-auto"></div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+  
+  // Default values if profile is not loaded
+  const userName = profileData?.username || 'User';
+  const userLocation = profileData?.location || 'Location not set';
+  const userBio = profileData?.bio || 'No bio available';
+  const userAvatar = profileData?.avatar_url || '';
+  const userInterests = profileData?.interests || [];
+  const isVerified = profileData?.verified || false;
+  
+  // Mock follower counts for now
+  const followerCount = 256;
+  const followingCount = 124;
 
   return (
     <AppLayout activeTab="profile">
@@ -122,40 +128,53 @@ const Profile = () => {
           
           <div className="px-4 relative -mt-12 flex justify-between items-end">
             <Avatar className="border-4 border-background h-24 w-24">
-              <AvatarImage src={user.avatar} />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={userAvatar} />
+              <AvatarFallback>{getInitial(userName)}</AvatarFallback>
             </Avatar>
             
             {isCurrentUser ? (
-              <Button variant="outline" className="mb-2">
-                <Settings className="h-4 w-4 mr-2" />
-                Edit Profile
-              </Button>
+              <div className="flex gap-2 mb-2">
+                <Button 
+                  variant="outline" 
+                  className="bg-white"
+                  onClick={() => setIsAccountSettingsOpen(true)}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Account
+                </Button>
+                <Button 
+                  variant="default" 
+                  className="bg-thrivvo-teal hover:bg-thrivvo-teal/90"
+                  onClick={() => setIsEditProfileOpen(true)}
+                >
+                  Edit Profile
+                </Button>
+              </div>
             ) : null}
           </div>
           
           <div className="px-4 py-2">
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-xl font-bold">{user.name}</h1>
-              {user.verified && (
+              <h1 className="text-xl font-bold">{userName}</h1>
+              {isVerified && (
                 <Shield className="h-4 w-4 text-thrivvo-teal" />
               )}
             </div>
-            <p className="text-muted-foreground text-sm mb-2">{user.location}</p>
-            <p className="text-sm mb-3">{user.bio}</p>
+            <p className="text-muted-foreground text-sm mb-2">{userLocation}</p>
+            <p className="text-sm mb-3">{userBio}</p>
             
             <div className="flex items-center gap-4 text-sm my-2">
               <div>
-                <span className="font-bold">{user.followers}</span> Followers
+                <span className="font-bold">{followerCount}</span> Followers
               </div>
               <div>
-                <span className="font-bold">{user.following}</span> Following
+                <span className="font-bold">{followingCount}</span> Following
               </div>
             </div>
 
-            {user.interests?.length > 0 && (
+            {userInterests?.length > 0 && (
               <div className="flex flex-wrap gap-1 my-3">
-                {user.interests.map((interest, i) => (
+                {userInterests.map((interest: string, i: number) => (
                   <Badge key={i} variant="outline">{interest}</Badge>
                 ))}
               </div>
@@ -165,7 +184,7 @@ const Profile = () => {
               <div className="flex gap-2 mt-3">
                 <Button 
                   variant={isFollowing ? "outline" : "default"}
-                  className={isFollowing ? "" : "bg-thrivvo-teal hover:bg-thrivvo-teal/90"}
+                  className={isFollowing ? "bg-white" : "bg-thrivvo-teal hover:bg-thrivvo-teal/90"}
                   onClick={handleFollow}
                 >
                   <Users className="h-4 w-4 mr-2" />
@@ -207,11 +226,11 @@ const Profile = () => {
               <h3 className="text-lg font-medium">Hosted Events</h3>
               
               <EventList 
-                events={mockEvents.filter(event => event.host.name === user.name)}
-                emptyStateMessage={
+                events={mockEvents.filter(event => event.host.name === userName)}
+                emptyMessage={
                   isCurrentUser 
                     ? "You haven't hosted any events yet. Create your first event!" 
-                    : `${user.name} hasn't hosted any events yet.`
+                    : `${userName} hasn't hosted any events yet.`
                 }
               />
             </div>
@@ -223,10 +242,10 @@ const Profile = () => {
               
               <EventList 
                 events={mockEvents.slice(0, 2)} 
-                emptyStateMessage={
+                emptyMessage={
                   isCurrentUser 
                     ? "You're not attending any upcoming events." 
-                    : `${user.name} is not attending any upcoming events.`
+                    : `${userName} is not attending any upcoming events.`
                 }
               />
             </div>
@@ -252,13 +271,27 @@ const Profile = () => {
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground py-8">
-                  {user.name} hasn't shared any photos yet.
+                  {userName} hasn't shared any photos yet.
                 </p>
               )}
             </div>
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Edit Profile Dialog */}
+      <EditProfileDialog 
+        open={isEditProfileOpen} 
+        onOpenChange={setIsEditProfileOpen}
+        currentProfile={profileData}
+        onProfileUpdate={handleProfileUpdate}
+      />
+      
+      {/* Account Settings Dialog */}
+      <AccountSettingsDialog 
+        open={isAccountSettingsOpen} 
+        onOpenChange={setIsAccountSettingsOpen}
+      />
     </AppLayout>
   );
 };
