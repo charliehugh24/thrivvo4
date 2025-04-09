@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -18,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tables } from '@/integrations/supabase/types';
 
-type ProfileData = Tables['profiles'];
+type ProfileData = Tables<'profiles'>;
 
 const mockUsers = {
   'user-1': {
@@ -130,8 +129,6 @@ const Profile = () => {
   };
 
   const handleSendMessage = () => {
-    // Navigate to the current page with a message query parameter
-    // This will be picked up by the DirectMessages component
     if (userId) {
       navigate(`?message=${userId}`);
     }

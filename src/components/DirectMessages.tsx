@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -198,18 +197,28 @@ interface DirectMessagesProps {
 }
 
 const formatTime = (date: Date) => {
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
-  const [conversations, setConversations] = useState(mockConversations);
-  const [chatHistory, setChatHistory] = useState<Record<string, ChatMessage[]>>(mockChatHistory);
+  
+  // Load initial state from localStorage or use mock data
+  const savedData = loadMessagesFromLocalStorage();
+  const [conversations, setConversations] = useState(savedData?.conversations || mockConversations);
+  const [chatHistory, setChatHistory] = useState<Record<string, ChatMessage[]>>(
+    savedData?.chatHistory || mockChatHistory
+  );
   
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    saveMessagesToLocalStorage(conversations, chatHistory);
+  }, [conversations, chatHistory]);
   
   // Check URL for message query parameter
   useEffect(() => {
@@ -498,6 +507,34 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }
       </DialogContent>
     </Dialog>
   );
+};
+
+// Persistent storage for DM state
+const STORAGE_KEY = 'thrivvo-direct-messages';
+
+// Function to save state to localStorage
+const saveMessagesToLocalStorage = (conversations: any[], chatHistory: Record<string, ChatMessage[]>) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      conversations,
+      chatHistory
+    }));
+  } catch (error) {
+    console.error('Error saving messages to localStorage:', error);
+  }
+};
+
+// Function to load state from localStorage
+const loadMessagesFromLocalStorage = () => {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error loading messages from localStorage:', error);
+  }
+  return null;
 };
 
 export default DirectMessages;
