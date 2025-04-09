@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -24,7 +25,11 @@ const EventReviewStep = () => {
     // Load saved data from session storage
     const savedData = sessionStorage.getItem('newEventData');
     if (savedData) {
-      setEventData(JSON.parse(savedData));
+      const parsedData = JSON.parse(savedData);
+      setEventData({
+        ...parsedData,
+        images: parsedData.images || [] // Ensure images is always an array
+      });
     } else {
       // If no data, go back to the start
       navigate('/add-event');
@@ -70,7 +75,7 @@ const EventReviewStep = () => {
       attendees: {
         count: 1
       },
-      images: eventData.images,
+      images: eventData.images || [], // Ensure images is an array even if undefined
       vibe: [],
       isPrivate: false
     };
@@ -133,7 +138,7 @@ const EventReviewStep = () => {
             <span>{formatDate(eventData.date)}</span>
           </div>
           
-          {eventData.images.length > 0 && (
+          {eventData.images && eventData.images.length > 0 && (
             <div>
               <h3 className="text-sm font-medium mb-2">Event Photos</h3>
               <div className="grid grid-cols-3 gap-2">
