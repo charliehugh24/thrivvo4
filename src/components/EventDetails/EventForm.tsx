@@ -102,6 +102,18 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
         />
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="ticketLimit">Ticket Limit (optional)</Label>
+        <Input 
+          id="ticketLimit"
+          type="number"
+          min="1"
+          placeholder="e.g., 50"
+          value={eventData.ticketLimit || ''}
+          onChange={(e) => onDataChange('ticketLimit', e.target.value)}
+        />
+      </div>
+
       <div className="border-t my-6 pt-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
@@ -133,18 +145,6 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
                   onChange={(e) => onDataChange('price', e.target.value)}
                 />
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="ticketLimit">Ticket Limit (optional)</Label>
-              <Input 
-                id="ticketLimit"
-                type="number"
-                min="1"
-                placeholder="e.g., 50"
-                value={eventData.ticketLimit || ''}
-                onChange={(e) => onDataChange('ticketLimit', e.target.value)}
-              />
             </div>
             
             <div className="space-y-2">
