@@ -21,6 +21,7 @@ import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
+import ForgotPassword from "./pages/ForgotPassword";
 import { useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const AppRoutes = () => {
     <Routes>
       {/* Public routes */}
       <Route path="/auth" element={<Auth />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       
       {/* Protected routes */}
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
