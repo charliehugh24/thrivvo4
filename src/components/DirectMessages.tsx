@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -233,6 +234,13 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }
       const convId = findOrCreateConversation(messageUserId);
       if (convId) {
         handleOpenConversation(convId);
+        
+        // Check if there's a message text in the URL
+        const messageText = params.get('text');
+        if (messageText && convId) {
+          // Send the message automatically
+          sendMessage(convId, messageText);
+        }
       }
       
       // Remove the query param
@@ -289,13 +297,14 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }
     return newConvId;
   };
 
-  const handleSendMessage = (conversationId: string) => {
-    if (!messageText.trim()) return;
+  // New separate function to send a message that can be called from outside the component
+  const sendMessage = (conversationId: string, text: string) => {
+    if (!text.trim()) return;
 
     const newMessage: ChatMessage = {
       id: `m${Date.now()}`,
       sender: 'me',
-      text: messageText,
+      text: text,
       timestamp: new Date(),
     };
 
@@ -310,15 +319,13 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }
       if (conv.id === conversationId) {
         return {
           ...conv,
-          lastMessage: messageText,
+          lastMessage: text,
           timestamp: new Date(),
           unread: false,
         };
       }
       return conv;
     }));
-
-    setMessageText('');
 
     // Simulate receiving a reply after a short delay
     setTimeout(() => {
@@ -357,6 +364,13 @@ const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }
         return conv;
       }));
     }, 2000);
+  };
+
+  const handleSendMessage = (conversationId: string) => {
+    if (messageText.trim()) {
+      sendMessage(conversationId, messageText);
+      setMessageText('');
+    }
   };
 
   const handleOpenConversation = (conversationId: string) => {

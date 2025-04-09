@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { mockEvents } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
-import { BellIcon, UserPlus, Calendar, Check } from 'lucide-react';
+import { BellIcon, UserPlus, Calendar, Check, MessageCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const Notifications = () => {
@@ -13,8 +13,8 @@ const Notifications = () => {
   // Mock data - in a real app this would come from user's data in a database
   const signedUpEvents = mockEvents.slice(0, 3); // First 3 events as example
   const followedUsers = [
-    { id: 'user1', name: 'Jordan Smith', avatar: 'https://randomuser.me/api/portraits/women/79.jpg' },
-    { id: 'user2', name: 'Casey Wong', avatar: 'https://randomuser.me/api/portraits/men/52.jpg' },
+    { id: 'user-2', name: 'Sam Rivera', avatar: 'https://randomuser.me/api/portraits/women/79.jpg' },
+    { id: 'user-4', name: 'Jordan Kim', avatar: 'https://randomuser.me/api/portraits/men/52.jpg' },
   ];
   
   const pendingNotifications = [
@@ -22,13 +22,13 @@ const Notifications = () => {
       id: 'notif1', 
       type: 'event_invite', 
       event: mockEvents[4],
-      from: { name: 'David Chen', avatar: 'https://randomuser.me/api/portraits/men/67.jpg' },
+      from: { id: 'user-3', name: 'Taylor Morgan', avatar: 'https://randomuser.me/api/portraits/men/67.jpg' },
       time: '2 hours ago'
     },
     { 
       id: 'notif2', 
       type: 'follow_request', 
-      from: { name: 'Taylor Johnson', avatar: 'https://randomuser.me/api/portraits/women/22.jpg' },
+      from: { id: 'user-5', name: 'Casey Lopez', avatar: 'https://randomuser.me/api/portraits/women/22.jpg' },
       time: '5 hours ago'
     },
   ];
@@ -37,7 +37,11 @@ const Notifications = () => {
     navigate(`/event/${eventId}`);
   };
   
-  const handleFollowUser = () => {
+  const handleUserClick = (userId: string) => {
+    navigate(`/profile/${userId}`);
+  };
+  
+  const handleFollowUser = (userId: string) => {
     toast({
       title: "User followed!",
       description: "You'll receive notifications when they post new events.",
@@ -49,6 +53,10 @@ const Notifications = () => {
       title: "Invite accepted!",
       description: "You've been added to the event.",
     });
+  };
+  
+  const handleMessageUser = (userId: string) => {
+    navigate(`?message=${userId}`);
   };
   
   return (
@@ -65,7 +73,10 @@ const Notifications = () => {
             <div className="space-y-4">
               {pendingNotifications.map((notification) => (
                 <div key={notification.id} className="bg-muted/50 rounded-lg p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div 
+                    className="flex items-center gap-3 cursor-pointer" 
+                    onClick={() => handleUserClick(notification.from.id)}
+                  >
                     <div className="w-10 h-10 rounded-full overflow-hidden">
                       <img 
                         src={notification.from.avatar} 
@@ -83,7 +94,15 @@ const Notifications = () => {
                       <p className="text-xs text-muted-foreground">{notification.time}</p>
                     </div>
                   </div>
-                  <div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleMessageUser(notification.from.id)}
+                    >
+                      <MessageCircle size={16} className="mr-1" />
+                      Message
+                    </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -150,7 +169,10 @@ const Notifications = () => {
           <div className="space-y-4">
             {followedUsers.map((user) => (
               <div key={user.id} className="bg-muted/50 rounded-lg p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div 
+                  className="flex items-center gap-3 cursor-pointer" 
+                  onClick={() => handleUserClick(user.id)}
+                >
                   <div className="w-10 h-10 rounded-full overflow-hidden">
                     <img 
                       src={user.avatar} 
@@ -163,14 +185,27 @@ const Notifications = () => {
                     <p className="text-sm text-muted-foreground">Shares your interests</p>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleFollowUser}
-                >
-                  <UserPlus size={16} className="mr-1" />
-                  Follow
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleMessageUser(user.id)}
+                  >
+                    <MessageCircle size={16} className="mr-1" />
+                    Message
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFollowUser(user.id);
+                    }}
+                  >
+                    <UserPlus size={16} className="mr-1" />
+                    Follow
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

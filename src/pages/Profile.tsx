@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -130,7 +131,12 @@ const Profile = () => {
 
   const handleSendMessage = () => {
     if (userId) {
-      navigate(`?message=${userId}`);
+      // If it's Sam Rivera, let's add a specific message
+      if (userId === 'user-2') {
+        navigate(`?message=${userId}&text=Hi Sam! I wanted to chat about the upcoming events this weekend.`);
+      } else {
+        navigate(`?message=${userId}`);
+      }
     }
   };
   
