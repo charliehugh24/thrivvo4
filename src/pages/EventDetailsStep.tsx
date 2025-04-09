@@ -30,13 +30,13 @@ const EventDetailsStep = () => {
   }, [navigate]);
 
   const handleBack = () => {
-    navigate(`/add-event/name?type=${eventData.type}`);
+    navigate('/add-event/photos');
   };
 
   const handleNext = () => {
     // Save the complete event data to session storage
     sessionStorage.setItem('newEventData', JSON.stringify(eventData));
-    navigate('/add-event/photos');
+    navigate('/add-event/review');
   };
 
   const handleChange = (field: string, value: string) => {

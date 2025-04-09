@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -33,7 +32,7 @@ const EventReviewStep = () => {
   }, [navigate]);
 
   const handleBack = () => {
-    navigate('/add-event/photos');
+    navigate('/add-event/details');
   };
 
   const formatDate = (dateString: string) => {

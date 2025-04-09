@@ -35,8 +35,8 @@ const App = () => (
           <Route path="/search" element={<Search />} />
           <Route path="/add-event" element={<AddEvent />} />
           <Route path="/add-event/name" element={<EventNameStep />} />
-          <Route path="/add-event/details" element={<EventDetailsStep />} />
           <Route path="/add-event/photos" element={<EventPhotosStep />} />
+          <Route path="/add-event/details" element={<EventDetailsStep />} />
           <Route path="/add-event/review" element={<EventReviewStep />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/profile" element={<Profile />} />
