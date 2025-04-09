@@ -1,373 +1,250 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import EventCard from '@/components/EventCard';
-import EventList from '@/components/EventList';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Edit, Save, Calendar, Plus, Camera, Image } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Event } from '@/types';
+import { EventList } from '@/components/EventList';
 import { mockEvents } from '@/data/mockData';
+import { Shield, Settings, Users } from 'lucide-react';
 
-const profileData = {
-  name: "Alex Johnson",
-  age: 28,
-  gender: "Non-binary",
-  bio: "Adventure seeker and music lover. Always looking for the next exciting event or concert to attend!",
-  location: "San Francisco, CA",
-  hashtags: ["music", "outdoors", "food", "art", "travel"],
-  avatar: "/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png",
-  joinedDate: "January 2023",
-  hostedEvents: 12,
-  attendedEvents: 24
+// Mock user data - in a real app, this would come from an API
+const currentUser = {
+  id: 'current-user',
+  name: 'Jamie Smith',
+  avatar: '/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png',
+  bio: 'Event lover and social butterfly 🦋',
+  location: 'San Francisco, CA',
+  verified: true,
+  followers: 256,
+  following: 124,
+  interests: ['music', 'food', 'travel', 'art', 'fitness']
 };
 
+// Mock data for other users from the AttendeesList
+const mockUsers = [
+  {
+    id: 'user-1',
+    name: 'Alex Johnson',
+    avatar: '/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png',
+    bio: 'Adventure seeker and music lover',
+    location: 'Los Angeles, CA',
+    verified: true,
+    followers: 342,
+    following: 211,
+    interests: ['music', 'hiking', 'photography']
+  },
+  {
+    id: 'user-2',
+    name: 'Sam Rivera',
+    avatar: '',
+    bio: 'Food enthusiast and traveler',
+    location: 'New York, NY',
+    verified: false,
+    followers: 189,
+    following: 156,
+    interests: ['food', 'travel', 'cooking']
+  },
+  {
+    id: 'user-3',
+    name: 'Taylor Morgan',
+    avatar: '/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png',
+    bio: 'Tech geek and coffee addict',
+    location: 'Seattle, WA',
+    verified: true,
+    followers: 423,
+    following: 267,
+    interests: ['technology', 'coffee', 'gaming']
+  },
+  {
+    id: 'user-4',
+    name: 'Jordan Kim',
+    avatar: '',
+    bio: 'Fitness instructor and wellness coach',
+    location: 'Chicago, IL',
+    verified: false,
+    followers: 512,
+    following: 298,
+    interests: ['fitness', 'nutrition', 'meditation']
+  },
+  {
+    id: 'user-5',
+    name: 'Casey Lopez',
+    avatar: '/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png',
+    bio: 'Artist and creative mind',
+    location: 'Austin, TX',
+    verified: false,
+    followers: 276,
+    following: 184,
+    interests: ['art', 'design', 'music']
+  }
+];
+
+// Combine current user and mock users for easy lookup
+const allUsers = [currentUser, ...mockUsers];
+
 const Profile = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState(profileData);
-  const [formData, setFormData] = useState(profileData);
-  const [activeTab, setActiveTab] = useState("about");
-  const [eventsSubTab, setEventsSubTab] = useState("myEvents");
-  const [userCreatedEvents, setUserCreatedEvents] = useState<Event[]>([]);
-  const [attendingEvents, setAttendingEvents] = useState<Event[]>(mockEvents.slice(0, 3));
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const { userId } = useParams();
+  const [user, setUser] = useState(currentUser);
+  const [isCurrentUser, setIsCurrentUser] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  
   useEffect(() => {
-    const storedEvents = localStorage.getItem('userCreatedEvents');
-    if (storedEvents) {
-      try {
-        const parsedEvents = JSON.parse(storedEvents);
-        setUserCreatedEvents(parsedEvents);
-      } catch (error) {
-        console.error('Error parsing user created events:', error);
-        setUserCreatedEvents([]);
+    // If there's a userId parameter, try to find the user
+    if (userId) {
+      const foundUser = allUsers.find(u => u.id === userId);
+      if (foundUser) {
+        setUser(foundUser);
+        setIsCurrentUser(foundUser.id === currentUser.id);
       }
-    }
-  }, []);
-
-  const createdEvents = [
-    ...userCreatedEvents,
-    ...mockEvents.filter(event => event.host.id === "user-1")
-  ];
-
-  const handleEditToggle = () => {
-    if (isEditing) {
-      handleSaveProfile();
     } else {
-      setFormData(profile);
-      setIsEditing(true);
+      // If no userId parameter, show current user profile
+      setUser(currentUser);
+      setIsCurrentUser(true);
     }
-  };
-
-  const handleSaveProfile = () => {
-    setProfile(formData);
-    setIsEditing(false);
-    toast({
-      title: "Profile updated",
-      description: "Your profile has been updated successfully",
-    });
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleAvatarClick = () => {
-    if (isEditing && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result as string;
-        setFormData(prev => ({ ...prev, avatar: imageUrl }));
-        toast({
-          title: "Image selected",
-          description: "Your profile picture will be updated when you save",
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleCancelCreatedEvent = (eventId: string) => {
-    const updatedEvents = userCreatedEvents.filter(event => event.id !== eventId);
-    setUserCreatedEvents(updatedEvents);
-    localStorage.setItem('userCreatedEvents', JSON.stringify(updatedEvents));
-  };
-
-  const handleCancelAttendingEvent = (eventId: string) => {
-    const updatedEvents = attendingEvents.filter(event => event.id !== eventId);
-    setAttendingEvents(updatedEvents);
+  }, [userId]);
+  
+  const handleFollow = () => {
+    setIsFollowing(!isFollowing);
   };
 
   return (
     <AppLayout activeTab="profile">
-      <div className="p-4 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">My Profile</h1>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleEditToggle}
-          >
-            {isEditing ? (
-              <><Save className="mr-2" size={16} /> Save</>
-            ) : (
-              <><Edit className="mr-2" size={16} /> Edit</>
-            )}
-          </Button>
-        </div>
-
-        <div className="flex flex-col items-center space-y-4">
-          <div className="flex justify-center w-full">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleImageChange} 
-              accept="image/*" 
-              className="hidden" 
-            />
-            
-            <Avatar 
-              className={`w-24 h-24 border-2 border-thrivvo-teal ${isEditing ? 'cursor-pointer hover:opacity-80' : ''}`}
-              onClick={handleAvatarClick}
-            >
-              {formData.avatar ? (
-                <AvatarImage src={formData.avatar} alt="Profile" className="object-cover" />
-              ) : (
-                <AvatarFallback className="bg-muted flex items-center justify-center">
-                  {isEditing ? (
-                    <Camera className="w-8 h-8 text-thrivvo-teal" />
-                  ) : (
-                    profile.name.charAt(0)
-                  )}
-                </AvatarFallback>
-              )}
-              {isEditing && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full opacity-0 hover:opacity-100 transition-opacity">
-                  <Image className="h-8 w-8 text-white" />
-                </div>
-              )}
+      <div className="flex flex-col min-h-screen pb-16">
+        <div className="relative">
+          {/* Profile header/cover */}
+          <div className="bg-gradient-to-r from-thrivvo-teal to-thrivvo-orange/70 h-40" />
+          
+          {/* Profile picture and actions */}
+          <div className="px-4 relative -mt-12 flex justify-between items-end">
+            <Avatar className="border-4 border-background h-24 w-24">
+              <AvatarImage src={user.avatar} />
+              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
             </Avatar>
+            
+            {isCurrentUser ? (
+              <Button variant="outline" className="mb-2">
+                <Settings className="h-4 w-4 mr-2" />
+                Edit Profile
+              </Button>
+            ) : (
+              <Button 
+                variant={isFollowing ? "outline" : "default"}
+                className={isFollowing ? "mb-2" : "mb-2 bg-thrivvo-teal hover:bg-thrivvo-teal/90"}
+                onClick={handleFollow}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                {isFollowing ? 'Following' : 'Follow'}
+              </Button>
+            )}
           </div>
           
-          {isEditing ? (
-            <div className="w-full space-y-3">
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="text-sm font-medium">Name</label>
-                  <Input 
-                    name="name" 
-                    value={formData.name} 
-                    onChange={handleChange} 
-                  />
-                </div>
-                <div className="w-20">
-                  <label className="text-sm font-medium">Age</label>
-                  <Input 
-                    name="age" 
-                    type="number" 
-                    value={formData.age} 
-                    onChange={handleChange} 
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Gender</label>
-                <Input 
-                  name="gender" 
-                  value={formData.gender} 
-                  onChange={handleChange} 
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Bio</label>
-                <Textarea 
-                  name="bio" 
-                  value={formData.bio} 
-                  onChange={handleChange} 
-                  className="h-24"
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Location</label>
-                <Input 
-                  name="location" 
-                  value={formData.location} 
-                  onChange={handleChange} 
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Hashtags (comma separated)</label>
-                <Input 
-                  name="hashtags" 
-                  value={formData.hashtags.join(", ")} 
-                  onChange={(e) => {
-                    const tags = e.target.value.split(",").map(tag => tag.trim());
-                    setFormData(prev => ({ ...prev, hashtags: tags }));
-                  }} 
-                />
-              </div>
-              
-              <Button 
-                className="w-full mt-2 bg-thrivvo-teal hover:bg-thrivvo-teal/90" 
-                onClick={handleSaveProfile}
-              >
-                Save Profile
-              </Button>
+          {/* Profile info */}
+          <div className="px-4 py-2">
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-xl font-bold">{user.name}</h1>
+              {user.verified && (
+                <Shield className="h-4 w-4 text-thrivvo-teal" />
+              )}
             </div>
-          ) : (
-            <div className="text-center space-y-2">
-              <h2 className="text-xl font-bold">{profile.name}, {profile.age}</h2>
-              <p className="text-muted-foreground">{profile.gender} • {profile.location}</p>
-              <p className="text-sm max-w-md">{profile.bio}</p>
-              
-              <div className="flex flex-wrap justify-center gap-1 pt-2">
-                {profile.hashtags.map((tag, index) => (
-                  <span 
-                    key={index} 
-                    className="text-xs px-2 py-1 bg-thrivvo-teal/10 text-thrivvo-teal rounded-full"
-                  >
-                    #{tag}
-                  </span>
+            <p className="text-muted-foreground text-sm mb-2">{user.location}</p>
+            <p className="text-sm mb-3">{user.bio}</p>
+            
+            <div className="flex items-center gap-4 text-sm my-2">
+              <div>
+                <span className="font-bold">{user.followers}</span> Followers
+              </div>
+              <div>
+                <span className="font-bold">{user.following}</span> Following
+              </div>
+            </div>
+
+            {user.interests?.length > 0 && (
+              <div className="flex flex-wrap gap-1 my-3">
+                {user.interests.map((interest, i) => (
+                  <Badge key={i} variant="outline">{interest}</Badge>
                 ))}
               </div>
-
-              <div className="flex justify-center gap-4 pt-2 text-sm text-muted-foreground">
-                <div className="flex items-center">
-                  <Calendar size={14} className="mr-1" />
-                  <span>Joined {profile.joinedDate}</span>
-                </div>
-                <div>
-                  <span>{profile.hostedEvents} events hosted</span>
-                </div>
-                <div>
-                  <span>{profile.attendedEvents} events attended</span>
-                </div>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full pt-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="about">About</TabsTrigger>
-            <TabsTrigger value="events">My Events</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="about" className="space-y-4 pt-4">
-            <Card className="p-4">
-              <h3 className="font-medium mb-2">About Me</h3>
-              <p className="text-sm text-muted-foreground">{profile.bio}</p>
-            </Card>
-            
-            <Card className="p-4">
-              <h3 className="font-medium mb-2">Interests</h3>
-              <div className="flex flex-wrap gap-1">
-                {profile.hashtags.map((tag, index) => (
-                  <span 
-                    key={index} 
-                    className="text-xs px-2 py-1 bg-muted rounded-full"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </Card>
+        
+        <Tabs defaultValue="events" className="flex-1">
+          <div className="px-4 border-b">
+            <TabsList className="bg-transparent h-12">
+              <TabsTrigger value="events" className="flex-1 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-thrivvo-teal rounded-none h-12">
+                Events
+              </TabsTrigger>
+              <TabsTrigger value="attending" className="flex-1 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-thrivvo-teal rounded-none h-12">
+                Attending
+              </TabsTrigger>
+              <TabsTrigger value="photos" className="flex-1 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-thrivvo-teal rounded-none h-12">
+                Photos
+              </TabsTrigger>
+            </TabsList>
+          </div>
+  
+          <TabsContent value="events" className="p-4 pt-2">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Hosted Events</h3>
+              
+              {/* Show events where this user is the host */}
+              <EventList 
+                events={mockEvents.filter(event => event.host.name === user.name)}
+                variant="compact"
+                emptyStateMessage={
+                  isCurrentUser 
+                    ? "You haven't hosted any events yet. Create your first event!" 
+                    : `${user.name} hasn't hosted any events yet.`
+                }
+              />
+            </div>
           </TabsContent>
-          
-          <TabsContent value="events" className="space-y-4 pt-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-medium">My Events</h3>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/add-event')}
-              >
-                <Plus size={14} className="mr-1" /> Create Event
-              </Button>
+  
+          <TabsContent value="attending" className="p-4 pt-2">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Events Attending</h3>
+              
+              {/* In a real app, you would filter events this user is attending */}
+              <EventList 
+                events={mockEvents.slice(0, 2)} 
+                variant="compact"
+                emptyStateMessage={
+                  isCurrentUser 
+                    ? "You're not attending any upcoming events." 
+                    : `${user.name} is not attending any upcoming events.`
+                }
+              />
             </div>
-            
-            <div className="border-b">
-              <div className="flex space-x-4">
-                <button
-                  className={`pb-2 px-1 text-sm ${eventsSubTab === 'myEvents' ? 'border-b-2 border-thrivvo-teal text-thrivvo-teal font-medium' : 'text-muted-foreground'}`}
-                  onClick={() => setEventsSubTab('myEvents')}
-                >
-                  Events I Created
-                </button>
-                <button
-                  className={`pb-2 px-1 text-sm ${eventsSubTab === 'attending' ? 'border-b-2 border-thrivvo-teal text-thrivvo-teal font-medium' : 'text-muted-foreground'}`}
-                  onClick={() => setEventsSubTab('attending')}
-                >
-                  Events I'm Attending
-                </button>
-              </div>
+          </TabsContent>
+  
+          <TabsContent value="photos" className="p-4 pt-2">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Photos</h3>
+              
+              {isCurrentUser ? (
+                <div className="grid grid-cols-3 gap-1">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Card key={i} className="aspect-square overflow-hidden">
+                      <CardContent className="p-0">
+                        <img 
+                          src={`/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png`} 
+                          alt={`Gallery image ${i}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  {user.name} hasn't shared any photos yet.
+                </p>
+              )}
             </div>
-            
-            {eventsSubTab === 'myEvents' && (
-              <div className="space-y-4">
-                {createdEvents.length > 0 ? (
-                  <EventList 
-                    events={createdEvents} 
-                    emptyMessage="You haven't created any events yet" 
-                    showCancelOption={true}
-                    onCancelEvent={handleCancelCreatedEvent}
-                  />
-                ) : (
-                  <div className="text-center p-8">
-                    <h3 className="text-lg font-medium">You haven't created any events yet</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Create your first event to share with others
-                    </p>
-                    <Button onClick={() => navigate('/add-event')}>
-                      <Plus size={16} className="mr-1" /> Create Event
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {eventsSubTab === 'attending' && (
-              <div className="space-y-4">
-                {attendingEvents.length > 0 ? (
-                  <EventList
-                    events={attendingEvents}
-                    emptyMessage="You're not attending any events yet"
-                    showCancelOption={true}
-                    onCancelEvent={handleCancelAttendingEvent}
-                  />
-                ) : (
-                  <div className="text-center p-8">
-                    <h3 className="text-lg font-medium">You're not attending any events yet</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Browse events and join ones that interest you
-                    </p>
-                    <Button onClick={() => navigate('/')}>
-                      Browse Events
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
           </TabsContent>
         </Tabs>
       </div>
