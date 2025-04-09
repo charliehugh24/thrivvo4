@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +10,7 @@ import EventCard from '@/components/EventCard';
 import EventList from '@/components/EventList';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Edit, Save, Calendar, Plus } from 'lucide-react';
+import { Edit, Save, Calendar, Plus, Camera, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Temporary mock data for the profile
@@ -39,6 +40,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("about");
   const [eventsSubTab, setEventsSubTab] = useState("myEvents");
   const [userCreatedEvents, setUserCreatedEvents] = useState<Event[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get user created events from localStorage
   useEffect(() => {
@@ -78,6 +80,29 @@ const Profile = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Handle image upload
+  const handleAvatarClick = () => {
+    if (isEditing && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageUrl = reader.result as string;
+        setFormData(prev => ({ ...prev, avatar: imageUrl }));
+        toast({
+          title: "Image selected",
+          description: "Your profile picture will be updated when you save",
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Handle swipe actions for the EventCard component
   const handleSwipeLeft = () => {
     // For now, just a placeholder for the swipe left action
@@ -111,10 +136,35 @@ const Profile = () => {
         {/* Profile info */}
         <div className="flex flex-col items-center space-y-4">
           <div className="flex justify-center w-full">
-            <Avatar className="w-24 h-24 border-2 border-thrivvo-teal bg-background flex items-center justify-center cursor-pointer hover:bg-muted transition-colors">
-              <AvatarFallback className="bg-transparent">
-                <Plus className="w-8 h-8 text-thrivvo-teal" />
-              </AvatarFallback>
+            {/* Hidden file input */}
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleImageChange} 
+              accept="image/*" 
+              className="hidden" 
+            />
+            
+            <Avatar 
+              className={`w-24 h-24 border-2 border-thrivvo-teal ${isEditing ? 'cursor-pointer hover:opacity-80' : ''}`}
+              onClick={handleAvatarClick}
+            >
+              {formData.avatar ? (
+                <AvatarImage src={formData.avatar} alt="Profile" className="object-cover" />
+              ) : (
+                <AvatarFallback className="bg-muted flex items-center justify-center">
+                  {isEditing ? (
+                    <Camera className="w-8 h-8 text-thrivvo-teal" />
+                  ) : (
+                    profile.name.charAt(0)
+                  )}
+                </AvatarFallback>
+              )}
+              {isEditing && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full opacity-0 hover:opacity-100 transition-opacity">
+                  <Image className="h-8 w-8 text-white" />
+                </div>
+              )}
             </Avatar>
           </div>
           
