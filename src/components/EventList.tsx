@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, CheckCircle, DollarSign } from 'lucide-react';
 import { Event } from '@/types';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, isValid } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -26,6 +26,20 @@ const EventList: React.FC<EventListProps> = ({
       </div>
     );
   }
+
+  // Helper function to safely format time distance
+  const formatTimeDistance = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (!isValid(date)) {
+        return 'Invalid date';
+      }
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch (error) {
+      console.error('Error formatting date:', dateString, error);
+      return 'Date unavailable';
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -77,14 +91,14 @@ const EventList: React.FC<EventListProps> = ({
               <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                 <CalendarIcon size={12} />
                 <span>
-                  {new Date(event.time.start).toLocaleDateString('en-US', { 
+                  {event.time && event.time.start ? new Date(event.time.start).toLocaleDateString('en-US', { 
                     month: 'short', 
                     day: 'numeric' 
-                  })}
+                  }) : 'Date TBD'}
                 </span>
                 <ClockIcon size={12} className="ml-1" />
                 <span>
-                  {formatDistanceToNow(new Date(event.time.start), { addSuffix: true })}
+                  {event.time && event.time.start ? formatTimeDistance(event.time.start) : 'Time TBD'}
                 </span>
               </div>
               
