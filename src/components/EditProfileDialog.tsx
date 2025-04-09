@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,18 +9,9 @@ import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Upload } from 'lucide-react';
+import { Tables } from '@/integrations/supabase/types';
 
-interface ProfileData {
-  id: string;
-  username: string | null;
-  bio: string | null;
-  location: string | null;
-  avatar_url: string | null;
-  interests: string[] | null;
-  verified: boolean;
-  created_at: string;
-  updated_at: string;
-}
+type ProfileData = Tables<'profiles'>;
 
 interface EditProfileDialogProps {
   open: boolean;

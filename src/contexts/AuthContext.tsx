@@ -2,18 +2,9 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
+import { Tables } from '@/integrations/supabase/types';
 
-interface ProfileType {
-  id: string;
-  username: string | null;
-  bio: string | null;
-  location: string | null;
-  avatar_url: string | null;
-  interests: string[] | null;
-  verified: boolean;
-  created_at: string;
-  updated_at: string;
-}
+interface ProfileType extends Tables<'profiles'> {}
 
 interface AuthContextType {
   user: User | null;

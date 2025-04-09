@@ -15,18 +15,9 @@ import EditProfileDialog from '@/components/EditProfileDialog';
 import AccountSettingsDialog from '@/components/AccountSettingsDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Tables } from '@/integrations/supabase/types';
 
-interface ProfileData {
-  id: string;
-  username: string | null;
-  bio: string | null;
-  location: string | null;
-  avatar_url: string | null;
-  interests: string[] | null;
-  verified: boolean;
-  created_at: string;
-  updated_at: string;
-}
+type ProfileData = Tables<'profiles'>;
 
 const Profile = () => {
   const { userId } = useParams();
@@ -119,7 +110,6 @@ const Profile = () => {
     );
   }
   
-  // Default values if profile is not loaded
   const userName = profileData?.username || 'User';
   const userLocation = profileData?.location || 'Location not set';
   const userBio = profileData?.bio || 'No bio available';
@@ -127,7 +117,6 @@ const Profile = () => {
   const userInterests = profileData?.interests || [];
   const isVerified = profileData?.verified || false;
   
-  // Mock follower counts for now
   const followerCount = 256;
   const followingCount = 124;
 
@@ -290,7 +279,6 @@ const Profile = () => {
         </Tabs>
       </div>
       
-      {/* Edit Profile Dialog */}
       <EditProfileDialog 
         open={isEditProfileOpen} 
         onOpenChange={setIsEditProfileOpen}
@@ -298,7 +286,6 @@ const Profile = () => {
         onProfileUpdate={handleProfileUpdate}
       />
       
-      {/* Account Settings Dialog */}
       <AccountSettingsDialog 
         open={isAccountSettingsOpen} 
         onOpenChange={setIsAccountSettingsOpen}

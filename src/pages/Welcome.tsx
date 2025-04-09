@@ -9,18 +9,9 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Upload, ChevronRight } from 'lucide-react';
+import { Tables } from '@/integrations/supabase/types';
 
-interface ProfileData {
-  id: string;
-  username: string | null;
-  bio: string | null;
-  location: string | null;
-  avatar_url: string | null;
-  interests: string[] | null;
-  verified: boolean;
-  created_at: string;
-  updated_at: string;
-}
+type ProfileData = Tables<'profiles'>;
 
 const Welcome = () => {
   const navigate = useNavigate();
