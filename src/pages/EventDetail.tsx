@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Event } from '@/types';
 import { mockEvents } from '@/data/mockData';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -19,13 +19,27 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const EventDetail = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, this would be an API call to fetch event details
-    const foundEvent = mockEvents.find(e => e.id === eventId);
-    setEvent(foundEvent || null);
+    // Check local storage for user created events first
+    const userEventsString = localStorage.getItem('userCreatedEvents');
+    let userEvents = [];
+    if (userEventsString) {
+      try {
+        userEvents = JSON.parse(userEventsString);
+      } catch (e) {
+        console.error('Error parsing user events:', e);
+      }
+    }
+    
+    // Look for the event in both user created events and mock events
+    const foundInUserEvents = userEvents.find((e: Event) => e.id === eventId);
+    const foundInMockEvents = mockEvents.find(e => e.id === eventId);
+    
+    setEvent(foundInUserEvents || foundInMockEvents || null);
     setLoading(false);
   }, [eventId]);
 
@@ -42,6 +56,36 @@ const EventDetail = () => {
       description: "Taking you to the payment screen...",
     });
     // In a real app, this would open a payment form or redirect to payment processor
+  };
+
+  const handleShare = () => {
+    if (!event) return;
+    
+    const shareUrl = `${window.location.origin}/event/${event.id}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: event.title,
+        text: `Check out this event: ${event.title}`,
+        url: shareUrl,
+      }).catch(error => {
+        console.log('Error sharing', error);
+        copyToClipboard(shareUrl);
+      });
+    } else {
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Link copied!",
+        description: "Event link copied to clipboard",
+      });
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+    });
   };
 
   if (loading) {
@@ -77,16 +121,26 @@ const EventDetail = () => {
       <div className="flex flex-col min-h-screen">
         {/* Back button and header */}
         <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm p-4 border-b">
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigate('/')}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => navigate(-1)}
+                className="h-8 w-8"
+              >
+                <ArrowLeft size={18} />
+              </Button>
+              <h1 className="text-lg font-medium truncate">Event Details</h1>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8"
+              onClick={handleShare}
             >
-              <ArrowLeft size={18} />
+              <Share2 size={18} />
             </Button>
-            <h1 className="text-lg font-medium truncate">Event Details</h1>
           </div>
         </div>
 
@@ -100,7 +154,7 @@ const EventDetail = () => {
               className="w-full h-full object-cover"
             />
             <div className="absolute top-3 right-3 flex gap-2">
-              <Button variant="outline" size="icon" className="h-8 w-8 bg-black/20 backdrop-blur-sm border-0 text-white hover:bg-black/40 hover:text-white">
+              <Button variant="outline" size="icon" className="h-8 w-8 bg-black/20 backdrop-blur-sm border-0 text-white hover:bg-black/40 hover:text-white" onClick={handleShare}>
                 <Share2 size={16} />
               </Button>
               <Button variant="outline" size="icon" className="h-8 w-8 bg-black/20 backdrop-blur-sm border-0 text-white hover:bg-black/40 hover:text-white">

@@ -1,11 +1,13 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, CheckCircle, DollarSign } from 'lucide-react';
+import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, CheckCircle, DollarSign, Share2 } from 'lucide-react';
 import { Event } from '@/types';
 import { formatDistanceToNow, isValid } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface EventListProps {
   events: Event[];
@@ -16,6 +18,8 @@ const EventList: React.FC<EventListProps> = ({
   events, 
   emptyMessage = "No events found" 
 }) => {
+  const { toast } = useToast();
+
   if (events.length === 0) {
     return (
       <div className="text-center p-8">
@@ -41,79 +45,123 @@ const EventList: React.FC<EventListProps> = ({
     }
   };
 
+  const handleShare = (event: Event, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Create the share URL
+    const shareUrl = `${window.location.origin}/event/${event.id}`;
+    
+    // Try to use the Web Share API if available
+    if (navigator.share) {
+      navigator.share({
+        title: event.title,
+        text: `Check out this event: ${event.title}`,
+        url: shareUrl,
+      }).catch(error => {
+        console.log('Error sharing', error);
+        // Fallback to clipboard
+        copyToClipboard(shareUrl);
+      });
+    } else {
+      // Fallback to clipboard
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Link copied!",
+        description: "Event link copied to clipboard",
+      });
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+    });
+  };
+
   return (
     <div className="space-y-4">
       {events.map((event) => (
-        <Link 
-          key={event.id}
-          to={`/event/${event.id}`}
-          className="block"
-        >
-          <div className="flex gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-            <div className="relative w-24 h-24 rounded-md overflow-hidden shrink-0">
-              <img 
-                src={event.images[0]} 
-                alt={event.title} 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-1 left-1 flex flex-col gap-1">
-                {(event.price && event.price.amount > 0) || event.monetized ? (
-                  <Badge variant="secondary" className="bg-thrivvo-teal text-white">
-                    <DollarSign size={12} className="mr-1" /> Premium
-                  </Badge>
-                ) : null}
+        <div key={event.id} className="relative">
+          <Link 
+            to={`/event/${event.id}`}
+            className="block"
+          >
+            <div className="flex gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+              <div className="relative w-24 h-24 rounded-md overflow-hidden shrink-0">
+                <img 
+                  src={event.images[0]} 
+                  alt={event.title} 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-1 left-1 flex flex-col gap-1">
+                  {(event.price && event.price.amount > 0) || event.monetized ? (
+                    <Badge variant="secondary" className="bg-thrivvo-teal text-white">
+                      <DollarSign size={12} className="mr-1" /> Premium
+                    </Badge>
+                  ) : null}
+                  
+                  {event.isVerified && (
+                    <Badge variant="outline" className="bg-white/90 text-thrivvo-orange border-thrivvo-orange">
+                      <CheckCircle size={12} className="mr-1 text-thrivvo-orange" /> Verified
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-base truncate">{event.title}</h3>
+                  {event.isVerified && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <CheckCircle size={16} className="text-thrivvo-orange" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Verified event</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
                 
-                {event.isVerified && (
-                  <Badge variant="outline" className="bg-white/90 text-thrivvo-orange border-thrivvo-orange">
-                    <CheckCircle size={12} className="mr-1 text-thrivvo-orange" /> Verified
-                  </Badge>
-                )}
+                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                  <CalendarIcon size={12} />
+                  <span>
+                    {event.time && event.time.start ? new Date(event.time.start).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric' 
+                    }) : 'Date TBD'}
+                  </span>
+                  <ClockIcon size={12} className="ml-1" />
+                  <span>
+                    {event.time && event.time.start ? formatTimeDistance(event.time.start) : 'Time TBD'}
+                  </span>
+                </div>
+                
+                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                  <MapPinIcon size={12} />
+                  <span className="truncate">{event.location.name}</span>
+                </div>
+                
+                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                  <UserIcon size={12} />
+                  <span>{event.attendees.count} attending</span>
+                </div>
               </div>
             </div>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium text-base truncate">{event.title}</h3>
-                {event.isVerified && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <CheckCircle size={16} className="text-thrivvo-orange" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Verified event</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
-              
-              <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                <CalendarIcon size={12} />
-                <span>
-                  {event.time && event.time.start ? new Date(event.time.start).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric' 
-                  }) : 'Date TBD'}
-                </span>
-                <ClockIcon size={12} className="ml-1" />
-                <span>
-                  {event.time && event.time.start ? formatTimeDistance(event.time.start) : 'Time TBD'}
-                </span>
-              </div>
-              
-              <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                <MapPinIcon size={12} />
-                <span className="truncate">{event.location.name}</span>
-              </div>
-              
-              <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                <UserIcon size={12} />
-                <span>{event.attendees.count} attending</span>
-              </div>
-            </div>
-          </div>
-        </Link>
+          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 h-7 w-7 rounded-full bg-background/80 hover:bg-background shadow-sm"
+            onClick={(e) => handleShare(event, e)}
+          >
+            <Share2 size={14} />
+          </Button>
+        </div>
       ))}
     </div>
   );

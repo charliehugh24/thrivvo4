@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { MapPin, Clock, Users, DollarSign, Check, Calendar, Share2 } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface EventDetailDialogProps {
   event: Event | null;
@@ -20,6 +20,8 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({
   open, 
   onOpenChange 
 }) => {
+  const { toast } = useToast();
+  
   if (!event) return null;
   
   const handleRSVP = () => {
@@ -31,9 +33,30 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({
   };
 
   const handleShare = () => {
-    toast({
-      title: "Link copied!",
-      description: "Event link copied to clipboard",
+    const shareUrl = `${window.location.origin}/event/${event.id}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: event.title,
+        text: `Check out this event: ${event.title}`,
+        url: shareUrl,
+      }).catch(error => {
+        console.log('Error sharing', error);
+        copyToClipboard(shareUrl);
+      });
+    } else {
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Link copied!",
+        description: "Event link copied to clipboard",
+      });
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
     });
   };
 

@@ -46,8 +46,13 @@ const Profile = () => {
   useEffect(() => {
     const storedEvents = localStorage.getItem('userCreatedEvents');
     if (storedEvents) {
-      const parsedEvents = JSON.parse(storedEvents);
-      setUserCreatedEvents(parsedEvents);
+      try {
+        const parsedEvents = JSON.parse(storedEvents);
+        setUserCreatedEvents(parsedEvents);
+      } catch (error) {
+        console.error('Error parsing user created events:', error);
+        setUserCreatedEvents([]);
+      }
     }
   }, []);
 
@@ -57,12 +62,16 @@ const Profile = () => {
     ...userCreatedEvents,
     ...mockEvents.filter(event => event.host.id === "user-1")
   ];
-  const attendingEvents = mockEvents.slice(0, 3); // Just using some events for demo
+  
+  // Just using some events for demo
+  const attendingEvents = mockEvents.slice(0, 3); 
 
   const handleEditToggle = () => {
-    setIsEditing(!isEditing);
-    if (!isEditing) {
+    if (isEditing) {
+      handleSaveProfile();
+    } else {
       setFormData(profile);
+      setIsEditing(true);
     }
   };
 
@@ -306,7 +315,7 @@ const Profile = () => {
                 size="sm"
                 onClick={() => navigate('/add-event')}
               >
-                Create Event
+                <Plus size={14} className="mr-1" /> Create Event
               </Button>
             </div>
             
@@ -329,7 +338,7 @@ const Profile = () => {
             </div>
             
             {/* Events content based on sub-tab */}
-            {eventsSubTab === 'myEvents' ? (
+            {eventsSubTab === 'myEvents' && (
               <div className="space-y-4">
                 {createdEvents.length > 0 ? (
                   <EventList 
@@ -343,21 +352,31 @@ const Profile = () => {
                       Create your first event to share with others
                     </p>
                     <Button onClick={() => navigate('/add-event')}>
-                      Create Event
+                      <Plus size={16} className="mr-1" /> Create Event
                     </Button>
                   </div>
                 )}
               </div>
-            ) : (
+            )}
+            
+            {eventsSubTab === 'attending' && (
               <div className="space-y-4">
-                {attendingEvents.map((event: Event) => (
-                  <EventCard 
-                    key={event.id} 
-                    event={event}
-                    onSwipeLeft={handleSwipeLeft}
-                    onSwipeRight={handleSwipeRight}
+                {attendingEvents.length > 0 ? (
+                  <EventList
+                    events={attendingEvents}
+                    emptyMessage="You're not attending any events yet"
                   />
-                ))}
+                ) : (
+                  <div className="text-center p-8">
+                    <h3 className="text-lg font-medium">You're not attending any events yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Browse events and join ones that interest you
+                    </p>
+                    <Button onClick={() => navigate('/')}>
+                      Browse Events
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>
