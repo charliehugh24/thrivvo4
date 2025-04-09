@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -17,12 +16,24 @@ import AccountSettingsDialog from '@/components/AccountSettingsDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+interface ProfileData {
+  id: string;
+  username: string | null;
+  bio: string | null;
+  location: string | null;
+  avatar_url: string | null;
+  interests: string[] | null;
+  verified: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 const Profile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { user, profile: authProfile, refreshProfile } = useAuth();
   
-  const [profileData, setProfileData] = useState<any | null>(null);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isCurrentUser, setIsCurrentUser] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -45,10 +56,10 @@ const Profile = () => {
             .single();
           
           if (error) throw error;
-          setProfileData(data);
+          setProfileData(data as ProfileData);
         } else {
           setIsCurrentUser(true);
-          setProfileData(authProfile);
+          setProfileData(authProfile as ProfileData);
         }
       } catch (error) {
         console.error('Error fetching profile:', error);

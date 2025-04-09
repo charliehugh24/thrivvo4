@@ -3,10 +3,22 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 
+interface ProfileType {
+  id: string;
+  username: string | null;
+  bio: string | null;
+  location: string | null;
+  avatar_url: string | null;
+  interests: string[] | null;
+  verified: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: any | null;
+  profile: ProfileType | null;
   loading: boolean;
   refreshProfile: () => Promise<void>;
 }
@@ -24,7 +36,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<ProfileType | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -79,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
       
       if (error) throw error;
-      setProfile(data);
+      setProfile(data as ProfileType);
     } catch (error) {
       console.error('Error fetching profile:', error);
     }

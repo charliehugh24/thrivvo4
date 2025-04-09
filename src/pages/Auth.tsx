@@ -29,6 +29,25 @@ const Auth = () => {
   
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: "Missing information",
+        description: "Please provide both email and password",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -59,6 +78,16 @@ const Auth = () => {
   
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: "Missing information",
+        description: "Please provide both email and password",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -77,6 +106,7 @@ const Auth = () => {
         navigate('/');
       }
     } catch (error: any) {
+      console.error("Sign in error:", error);
       toast({
         title: "Error signing in",
         description: error.message || "Invalid email or password",

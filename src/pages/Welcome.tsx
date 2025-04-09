@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,18 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Upload, ChevronRight } from 'lucide-react';
+
+interface ProfileData {
+  id: string;
+  username: string | null;
+  bio: string | null;
+  location: string | null;
+  avatar_url: string | null;
+  interests: string[] | null;
+  verified: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -32,7 +43,6 @@ const Welcome = () => {
     'meditation', 'design', 'nutrition'
   ];
   
-  // Check if user is logged in
   useEffect(() => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -67,7 +77,6 @@ const Welcome = () => {
       const file = e.target.files[0];
       setAvatarFile(file);
       
-      // Create preview
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -97,11 +106,11 @@ const Welcome = () => {
       const fileExt = avatarFile.name.split('.').pop();
       const fileName = `${userId}-${Date.now()}.${fileExt}`;
       
-      const { data, error } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, avatarFile);
+        .upload(fileName, avatarFile, { upsert: true });
       
-      if (error) throw error;
+      if (uploadError) throw uploadError;
       
       const { data: urlData } = supabase.storage
         .from('avatars')
@@ -119,10 +128,8 @@ const Welcome = () => {
     
     setLoading(true);
     try {
-      // Upload avatar if provided
       const avatarUrl = await uploadAvatar(userId);
       
-      // Update profile
       const { error } = await supabase
         .from('profiles')
         .update({

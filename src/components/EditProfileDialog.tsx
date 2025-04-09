@@ -1,35 +1,42 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { X, Upload, Trash2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Upload } from 'lucide-react';
+
+interface ProfileData {
+  id: string;
+  username: string | null;
+  bio: string | null;
+  location: string | null;
+  avatar_url: string | null;
+  interests: string[] | null;
+  verified: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 interface EditProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentProfile: any;
-  onProfileUpdate: () => void;
+  currentProfile: ProfileData | null;
+  onProfileUpdate: () => Promise<void>;
 }
 
-const interestOptions = [
-  'music', 'food', 'travel', 'art', 'fitness', 'technology', 
-  'coffee', 'gaming', 'photography', 'hiking', 'cooking', 
-  'meditation', 'design', 'nutrition'
-];
-
-const EditProfileDialog: React.FC<EditProfileDialogProps> = ({ 
-  open, 
-  onOpenChange, 
+const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
+  open,
+  onOpenChange,
   currentProfile,
   onProfileUpdate
 }) => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState({
     username: '',
@@ -37,9 +44,18 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
     location: '',
     interests: [] as string[],
   });
+  
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-
+  
+  // Available interests for selection
+  const interestOptions = [
+    'music', 'food', 'travel', 'art', 'fitness', 'technology', 
+    'coffee', 'gaming', 'photography', 'hiking', 'cooking', 
+    'meditation', 'design', 'nutrition'
+  ];
+  
+  // Initialize form with current profile data when opened
   useEffect(() => {
     if (currentProfile) {
       setProfileData({
@@ -53,13 +69,13 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
         setAvatarPreview(currentProfile.avatar_url);
       }
     }
-  }, [currentProfile]);
-
+  }, [currentProfile, open]);
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));
   };
-
+  
   const toggleInterest = (interest: string) => {
     setProfileData(prev => {
       const interests = [...prev.interests];
@@ -70,7 +86,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
       }
     });
   };
-
+  
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -86,36 +102,20 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
       reader.readAsDataURL(file);
     }
   };
-
-  const clearAvatar = () => {
-    setAvatarFile(null);
-    setAvatarPreview(null);
-  };
-
-  const uploadAvatar = async (userId: string): Promise<string | null> => {
-    if (!avatarFile) return currentProfile.avatar_url || null;
-
+  
+  const uploadAvatar = async (): Promise<string | null> => {
+    if (!avatarFile || !user) return null;
+    
     try {
-      // Delete existing avatar if present
-      if (currentProfile.avatar_url) {
-        const oldPath = currentProfile.avatar_url.split('/').pop();
-        if (oldPath) {
-          await supabase.storage.from('avatars').remove([oldPath]);
-        }
-      }
-
-      // Generate a unique file name to avoid conflicts
       const fileExt = avatarFile.name.split('.').pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       
-      // Upload new avatar
-      const { data, error } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, avatarFile);
+        .upload(fileName, avatarFile, { upsert: true });
       
-      if (error) throw error;
+      if (uploadError) throw uploadError;
       
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
@@ -126,22 +126,17 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
       return null;
     }
   };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  
+  const handleSave = async () => {
+    if (!user) return;
     
     setLoading(true);
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        throw new Error('You must be logged in to update your profile');
-      }
-      
-      const userId = sessionData.session.user.id;
-      
       // Upload avatar if changed
-      const avatarUrl = await uploadAvatar(userId);
+      let avatarUrl = currentProfile?.avatar_url || null;
+      if (avatarFile) {
+        avatarUrl = await uploadAvatar();
+      }
       
       // Update profile
       const { error } = await supabase
@@ -154,20 +149,21 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
           avatar_url: avatarUrl,
           updated_at: new Date().toISOString()
         })
-        .eq('id', userId);
+        .eq('id', user.id);
       
       if (error) throw error;
       
-      toast({
-        title: "Profile updated successfully!",
-        description: "Your profile has been updated with the new information."
-      });
+      await onProfileUpdate();
       
-      onProfileUpdate();
       onOpenChange(false);
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully."
+      });
     } catch (error: any) {
       toast({
-        title: "Failed to update profile",
+        title: "Error updating profile",
         description: error.message || "An unexpected error occurred",
         variant: "destructive"
       });
@@ -175,51 +171,46 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
       setLoading(false);
     }
   };
-
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Your Profile</DialogTitle>
+          <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex flex-col items-center gap-4">
-            {avatarPreview ? (
-              <div className="relative">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={avatarPreview} />
-                  <AvatarFallback>{profileData.username?.charAt(0) || '?'}</AvatarFallback>
-                </Avatar>
-                <Button 
-                  type="button" 
-                  variant="destructive" 
-                  size="icon"
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                  onClick={clearAvatar}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center w-20 h-20 bg-muted rounded-full">
-                <Upload className="h-8 w-8 text-muted-foreground" />
-              </div>
-            )}
-            
-            <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="avatar">Profile Picture</Label>
-              <Input 
-                id="avatar" 
-                type="file" 
-                accept="image/*"
-                onChange={handleAvatarChange}
-                className="cursor-pointer"
-              />
+        <div className="space-y-4 py-4">
+          <div className="flex flex-col items-center gap-4 mb-6">
+            <div onClick={() => document.getElementById('profile-avatar-input')?.click()} className="cursor-pointer">
+              {avatarPreview ? (
+                <div className="relative h-24 w-24 rounded-full overflow-hidden">
+                  <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center w-24 h-24 bg-muted rounded-full">
+                  <Upload className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
             </div>
+            
+            <input 
+              id="profile-avatar-input" 
+              type="file" 
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="hidden"
+            />
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              onClick={() => document.getElementById('profile-avatar-input')?.click()}
+            >
+              {avatarPreview ? 'Change Photo' : 'Add Profile Photo'}
+            </Button>
           </div>
           
-          <div className="grid gap-2">
+          <div className="space-y-2">
             <Label htmlFor="username">Display Name</Label>
             <Input
               id="username"
@@ -229,7 +220,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
             />
           </div>
           
-          <div className="grid gap-2">
+          <div className="space-y-2">
             <Label htmlFor="bio">Bio</Label>
             <Textarea
               id="bio"
@@ -240,7 +231,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
             />
           </div>
           
-          <div className="grid gap-2">
+          <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
             <Input
               id="location"
@@ -250,34 +241,39 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
             />
           </div>
           
-          <div className="grid gap-2">
+          <div className="space-y-2">
             <Label>Interests</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mt-1">
               {interestOptions.map((interest) => (
                 <Badge 
                   key={interest}
                   variant={profileData.interests.includes(interest) ? "default" : "outline"}
-                  className="cursor-pointer select-none"
+                  className="cursor-pointer"
                   onClick={() => toggleInterest(interest)}
                 >
                   {interest}
-                  {profileData.interests.includes(interest) && (
-                    <X className="ml-1 h-3 w-3" />
-                  )}
                 </Badge>
               ))}
             </div>
           </div>
-          
-          <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
+        
+        <DialogFooter>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave}
+            disabled={loading}
+            className="bg-thrivvo-teal hover:bg-thrivvo-teal/90"
+          >
+            {loading ? "Saving..." : "Save Changes"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
