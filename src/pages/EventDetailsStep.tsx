@@ -13,7 +13,14 @@ const EventDetailsStep = () => {
     name: '',
     description: '',
     location: '',
-    date: ''
+    date: '',
+    isPaid: false,
+    price: '',
+    ticketLimit: '',
+    salesDeadline: '',
+    ticketType: 'digital',
+    paymentMethod: '',
+    refundPolicy: ''
   });
 
   // Fetch existing event data from session storage
@@ -39,7 +46,7 @@ const EventDetailsStep = () => {
     navigate('/add-event/photos');
   };
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | boolean | number) => {
     setEventData(prev => {
       const updated = { ...prev, [field]: value };
       // Also save to session storage on each change for backup

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, MapPin } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, DollarSign, Ticket } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Event } from '@/types';
@@ -16,7 +16,14 @@ const EventReviewStep = () => {
     description: '',
     location: '',
     date: '',
-    images: [] as string[]
+    images: [] as string[],
+    isPaid: false,
+    price: '',
+    ticketLimit: '',
+    salesDeadline: '',
+    ticketType: '',
+    paymentMethod: '',
+    refundPolicy: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
@@ -73,11 +80,17 @@ const EventReviewStep = () => {
         avatar: "/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png" // Current user avatar
       },
       attendees: {
-        count: 1
+        count: 1,
+        max: eventData.ticketLimit ? parseInt(eventData.ticketLimit) : undefined
       },
+      price: eventData.isPaid && eventData.price ? {
+        amount: parseFloat(eventData.price),
+        currency: "USD"
+      } : undefined,
       images: eventData.images || [], // Ensure images is an array even if undefined
       vibe: [],
-      isPrivate: false
+      isPrivate: false,
+      monetized: eventData.isPaid || false // Add monetized flag based on isPaid
     };
     
     // Save to localStorage (get existing events first)
@@ -137,6 +150,46 @@ const EventReviewStep = () => {
             <Calendar size={16} className="mr-1" />
             <span>{formatDate(eventData.date)}</span>
           </div>
+          
+          {eventData.isPaid && (
+            <div className="space-y-2 border-t pt-3 mt-3">
+              <h3 className="font-medium text-sm">Payment Details</h3>
+              
+              <div className="flex items-center text-sm text-muted-foreground">
+                <DollarSign size={16} className="mr-1" />
+                <span>${parseFloat(eventData.price || '0').toFixed(2)} per person</span>
+              </div>
+              
+              {eventData.ticketLimit && (
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Ticket size={16} className="mr-1" />
+                  <span>Limited to {eventData.ticketLimit} tickets</span>
+                </div>
+              )}
+              
+              {eventData.salesDeadline && (
+                <div className="text-sm text-muted-foreground ml-5">
+                  <span>Sales end: {
+                    eventData.salesDeadline === '1hour' ? '1 hour before event' :
+                    eventData.salesDeadline === '2hours' ? '2 hours before event' :
+                    eventData.salesDeadline === '1day' ? '1 day before event' : 
+                    'When event starts'
+                  }</span>
+                </div>
+              )}
+              
+              {eventData.refundPolicy && (
+                <div className="text-sm text-muted-foreground ml-5">
+                  <span>Refund policy: {
+                    eventData.refundPolicy === 'none' ? 'No refunds' :
+                    eventData.refundPolicy === '24hours' ? 'Up to 24 hours before event' :
+                    eventData.refundPolicy === '48hours' ? 'Up to 48 hours before event' : 
+                    'Custom policy'
+                  }</span>
+                </div>
+              )}
+            </div>
+          )}
           
           {eventData.images && eventData.images.length > 0 && (
             <div>
