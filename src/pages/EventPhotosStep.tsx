@@ -39,15 +39,15 @@ const EventPhotosStep = () => {
     // Save current images before going back
     const updatedEventData = { ...eventData };
     sessionStorage.setItem('newEventData', JSON.stringify(updatedEventData));
-    navigate('/add-event/name');
+    navigate('/add-event/details');
   };
 
   const handleNext = () => {
     // Save the data including images
     sessionStorage.setItem('newEventData', JSON.stringify(eventData));
     
-    // Go to the details step
-    navigate('/add-event/details');
+    // Go to the review step
+    navigate('/add-event/review');
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,7 +150,7 @@ const EventPhotosStep = () => {
               className="w-full"
               disabled={uploading}
             >
-              Continue to Details
+              Continue to Review
             </Button>
           </div>
         </div>

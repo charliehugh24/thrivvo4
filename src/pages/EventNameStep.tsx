@@ -35,7 +35,7 @@ const EventNameStep = () => {
     };
     sessionStorage.setItem('newEventData', JSON.stringify(eventData));
 
-    // Navigate to the next step
+    // Navigate to the details step (changed from photos)
     navigate('/add-event/details');
   };
 

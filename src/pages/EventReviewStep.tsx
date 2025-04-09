@@ -37,7 +37,7 @@ const EventReviewStep = () => {
   }, [navigate]);
 
   const handleBack = () => {
-    navigate('/add-event/details');
+    navigate('/add-event/photos');
   };
 
   const formatDate = (dateString: string) => {
