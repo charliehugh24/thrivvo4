@@ -120,15 +120,15 @@ const SubscriptionTiers: React.FC = () => {
             key={tier.id}
             className="flex flex-col"
           >
-            {tier.popular && (
-              <div className="bg-thrivvo-orange text-white text-xs font-medium py-1 px-3 absolute right-4 rounded-b-md">
-                MOST POPULAR
-              </div>
-            )}
             <CardHeader>
               <div className="flex justify-between items-center">
                 {tier.icon}
                 <div className="flex flex-col items-end">
+                  {tier.popular && (
+                    <div className="bg-thrivvo-orange text-white text-xs font-medium py-1 px-3 mb-1 rounded-md">
+                      MOST POPULAR
+                    </div>
+                  )}
                   <span className="text-2xl font-bold">${tier.price}</span>
                   <span className="text-xs text-muted-foreground">/month</span>
                 </div>
