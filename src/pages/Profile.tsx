@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -9,9 +8,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EventList from '@/components/EventList';
 import { mockEvents } from '@/data/mockData';
-import { Shield, Settings, Users } from 'lucide-react';
+import { Shield, Settings, Users, MessageCircle } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { toast } from '@/components/ui/use-toast';
 
-// Mock user data - in a real app, this would come from an API
 const currentUser = {
   id: 'current-user',
   name: 'Jamie Smith',
@@ -24,7 +24,6 @@ const currentUser = {
   interests: ['music', 'food', 'travel', 'art', 'fitness']
 };
 
-// Mock data for other users from the AttendeesList
 const mockUsers = [
   {
     id: 'user-1',
@@ -83,7 +82,6 @@ const mockUsers = [
   }
 ];
 
-// Combine current user and mock users for easy lookup
 const allUsers = [currentUser, ...mockUsers];
 
 const Profile = () => {
@@ -93,7 +91,6 @@ const Profile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   
   useEffect(() => {
-    // If there's a userId parameter, try to find the user
     if (userId) {
       const foundUser = allUsers.find(u => u.id === userId);
       if (foundUser) {
@@ -101,7 +98,6 @@ const Profile = () => {
         setIsCurrentUser(foundUser.id === currentUser.id);
       }
     } else {
-      // If no userId parameter, show current user profile
       setUser(currentUser);
       setIsCurrentUser(true);
     }
@@ -111,14 +107,19 @@ const Profile = () => {
     setIsFollowing(!isFollowing);
   };
 
+  const handleSendMessage = () => {
+    toast({
+      title: "Message initiated",
+      description: `Started a conversation with ${user.name}`,
+    });
+  };
+
   return (
     <AppLayout activeTab="profile">
       <div className="flex flex-col min-h-screen pb-16">
         <div className="relative">
-          {/* Profile header/cover */}
           <div className="bg-gradient-to-r from-thrivvo-teal to-thrivvo-orange/70 h-40" />
           
-          {/* Profile picture and actions */}
           <div className="px-4 relative -mt-12 flex justify-between items-end">
             <Avatar className="border-4 border-background h-24 w-24">
               <AvatarImage src={user.avatar} />
@@ -130,19 +131,9 @@ const Profile = () => {
                 <Settings className="h-4 w-4 mr-2" />
                 Edit Profile
               </Button>
-            ) : (
-              <Button 
-                variant={isFollowing ? "outline" : "default"}
-                className={isFollowing ? "mb-2" : "mb-2 bg-thrivvo-teal hover:bg-thrivvo-teal/90"}
-                onClick={handleFollow}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                {isFollowing ? 'Following' : 'Follow'}
-              </Button>
-            )}
+            ) : null}
           </div>
           
-          {/* Profile info */}
           <div className="px-4 py-2">
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-xl font-bold">{user.name}</h1>
@@ -169,6 +160,30 @@ const Profile = () => {
                 ))}
               </div>
             )}
+            
+            {!isCurrentUser && (
+              <div className="flex gap-2 mt-3">
+                <Button 
+                  variant={isFollowing ? "outline" : "default"}
+                  className={isFollowing ? "" : "bg-thrivvo-teal hover:bg-thrivvo-teal/90"}
+                  onClick={handleFollow}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="bg-white text-foreground border-input"
+                  onClick={handleSendMessage}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Message
+                </Button>
+              </div>
+            )}
+            
+            <Separator className="my-4" />
           </div>
         </div>
         
@@ -191,10 +206,8 @@ const Profile = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Hosted Events</h3>
               
-              {/* Show events where this user is the host */}
               <EventList 
                 events={mockEvents.filter(event => event.host.name === user.name)}
-                variant="compact"
                 emptyStateMessage={
                   isCurrentUser 
                     ? "You haven't hosted any events yet. Create your first event!" 
@@ -208,10 +221,8 @@ const Profile = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Events Attending</h3>
               
-              {/* In a real app, you would filter events this user is attending */}
               <EventList 
                 events={mockEvents.slice(0, 2)} 
-                variant="compact"
                 emptyStateMessage={
                   isCurrentUser 
                     ? "You're not attending any upcoming events." 
