@@ -53,8 +53,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({
               <TabsTrigger value="discover" className="flex-1 data-[state=active]:bg-thrivvo-teal data-[state=active]:text-white" asChild>
                 <Link to="/">
                   <img 
-                    src="/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png" 
-                    alt="Thrivvo Logo" 
+                    src="/lovable-uploads/9a2151c2-f4a9-4478-af2d-a90f4e168678.png" 
+                    alt="Discover" 
                     className="h-6 w-6" 
                   />
                 </Link>
