@@ -21,6 +21,12 @@ import { Tables } from '@/integrations/supabase/types';
 
 type ProfileData = Tables<'profiles'>;
 
+type FollowerData = {
+  id: string;
+  name: string;
+  avatar: string;
+};
+
 const mockUsers = {
   'user-1': {
     id: 'user-1',
@@ -121,15 +127,8 @@ const Profile = () => {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  
-  // Get followers and following for the current profile
-  const followers = userId && mockFollowers[userId as keyof typeof mockFollowers] 
-    ? mockFollowers[userId as keyof typeof mockFollowers] 
-    : [];
-  
-  const following = userId && mockFollowing[userId as keyof typeof mockFollowing] 
-    ? mockFollowing[userId as keyof typeof mockFollowing] 
-    : [];
+  const [followers, setFollowers] = useState<FollowerData[]>([]);
+  const [following, setFollowing] = useState<FollowerData[]>([]);
   
   useEffect(() => {
     const fetchProfile = async () => {
@@ -139,15 +138,35 @@ const Profile = () => {
         if (userId && userId !== user?.id) {
           setIsCurrentUser(false);
           
-          // Check if the current user is following this profile
-          if (userId.startsWith('user-') && user?.id) {
-            const currentUserFollowing = mockFollowing[user.id as keyof typeof mockFollowing] || [];
-            setIsFollowing(currentUserFollowing.some(f => f.id === userId));
-          }
-          
+          // Load profile data
           if (userId.startsWith('user-') && mockUsers[userId as keyof typeof mockUsers]) {
             setProfileData(mockUsers[userId as keyof typeof mockUsers] as ProfileData);
+            
+            // Load mock followers/following for demo users
+            const mockUserFollowers = userId && mockFollowers[userId as keyof typeof mockFollowers] 
+              ? mockFollowers[userId as keyof typeof mockFollowers] 
+              : [];
+            
+            const mockUserFollowing = userId && mockFollowing[userId as keyof typeof mockFollowing] 
+              ? mockFollowing[userId as keyof typeof mockFollowing] 
+              : [];
+            
+            setFollowers(mockUserFollowers);
+            setFollowing(mockUserFollowing);
+            
+            // Check if current user is following this profile
+            if (user?.id) {
+              if (user.id.startsWith('user-')) {
+                const currentUserFollowing = mockFollowing[user.id as keyof typeof mockFollowing] || [];
+                setIsFollowing(currentUserFollowing.some(f => f.id === userId));
+              } else {
+                // Check if real user is following this mock user
+                const mockProfileFollowers = mockFollowers[userId as keyof typeof mockFollowers] || [];
+                setIsFollowing(mockProfileFollowers.some(f => f.id === user.id));
+              }
+            }
           } else {
+            // Load real user profile from database
             const { data, error } = await supabase
               .from('profiles')
               .select('*')
@@ -156,10 +175,42 @@ const Profile = () => {
             
             if (error) throw error;
             setProfileData(data as ProfileData);
+            
+            // Load real followers and following
+            await fetchFollowers(userId);
+            await fetchFollowing(userId);
+            
+            // Check if current user is following this profile
+            if (user?.id) {
+              const { data: followData } = await supabase
+                .from('followers')
+                .select('*')
+                .eq('follower_id', user.id)
+                .eq('following_id', userId)
+                .maybeSingle();
+              
+              setIsFollowing(!!followData);
+            }
           }
         } else {
+          // Current user's profile
           setIsCurrentUser(true);
           setProfileData(authProfile as ProfileData);
+          
+          // Load current user's followers and following
+          if (user?.id) {
+            if (user.id.startsWith('user-')) {
+              // Use mock data for demo users
+              const mockUserFollowers = mockFollowers[user.id as keyof typeof mockFollowers] || [];
+              const mockUserFollowing = mockFollowing[user.id as keyof typeof mockFollowing] || [];
+              setFollowers(mockUserFollowers);
+              setFollowing(mockUserFollowing);
+            } else {
+              // Load real followers and following for authenticated users
+              await fetchFollowers(user.id);
+              await fetchFollowing(user.id);
+            }
+          }
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -179,14 +230,175 @@ const Profile = () => {
     }
   }, [userId, user, authProfile, navigate]);
   
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    toast({
-      title: isFollowing ? "Unfollowed" : "Following",
-      description: isFollowing 
-        ? `You are no longer following ${profileData?.username || 'this user'}` 
-        : `You are now following ${profileData?.username || 'this user'}`
-    });
+  const fetchFollowers = async (profileId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('followers')
+        .select(`
+          follower_id,
+          profiles:follower_id (
+            id,
+            username,
+            avatar_url
+          )
+        `)
+        .eq('following_id', profileId);
+      
+      if (error) throw error;
+      
+      // Transform the data to match our FollowerData structure
+      const formattedFollowers = data.map(item => ({
+        id: item.profiles.id,
+        name: item.profiles.username || 'User',
+        avatar: item.profiles.avatar_url || '',
+      }));
+      
+      setFollowers(formattedFollowers);
+    } catch (error) {
+      console.error('Error fetching followers:', error);
+    }
+  };
+  
+  const fetchFollowing = async (profileId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('followers')
+        .select(`
+          following_id,
+          profiles:following_id (
+            id,
+            username,
+            avatar_url
+          )
+        `)
+        .eq('follower_id', profileId);
+      
+      if (error) throw error;
+      
+      // Transform the data to match our FollowerData structure
+      const formattedFollowing = data.map(item => ({
+        id: item.profiles.id,
+        name: item.profiles.username || 'User',
+        avatar: item.profiles.avatar_url || '',
+      }));
+      
+      setFollowing(formattedFollowing);
+    } catch (error) {
+      console.error('Error fetching following:', error);
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!user || !userId) return;
+    
+    try {
+      if (isFollowing) {
+        // Unfollow
+        if (user.id.startsWith('user-') || userId.startsWith('user-')) {
+          // Handle mock data
+          if (user.id.startsWith('user-')) {
+            const userFollowing = [...following];
+            const updatedFollowing = userFollowing.filter(f => f.id !== userId);
+            setFollowing(updatedFollowing);
+          }
+          
+          if (userId.startsWith('user-')) {
+            const profileFollowers = [...followers];
+            const updatedFollowers = profileFollowers.filter(f => f.id !== user.id);
+            setFollowers(updatedFollowers);
+          }
+        } else {
+          // Real database operation
+          const { error } = await supabase
+            .from('followers')
+            .delete()
+            .eq('follower_id', user.id)
+            .eq('following_id', userId);
+          
+          if (error) throw error;
+          
+          // Update local state
+          await fetchFollowers(userId);
+          if (isCurrentUser) {
+            await fetchFollowing(user.id);
+          }
+        }
+      } else {
+        // Follow
+        if (user.id.startsWith('user-') || userId.startsWith('user-')) {
+          // Handle mock data
+          if (user.id.startsWith('user-') && mockUsers[user.id as keyof typeof mockUsers]) {
+            const userProfile = mockUsers[user.id as keyof typeof mockUsers];
+            const userFollowing = [...following];
+            
+            if (userId.startsWith('user-') && mockUsers[userId as keyof typeof mockUsers]) {
+              const targetProfile = mockUsers[userId as keyof typeof mockUsers];
+              
+              userFollowing.push({
+                id: userId,
+                name: targetProfile.username || 'User',
+                avatar: targetProfile.avatar_url || '',
+              });
+              
+              setFollowing(userFollowing);
+            } else if (profileData) {
+              userFollowing.push({
+                id: userId,
+                name: profileData.username || 'User',
+                avatar: profileData.avatar_url || '',
+              });
+              
+              setFollowing(userFollowing);
+            }
+          }
+          
+          if (userId.startsWith('user-') && mockUsers[userId as keyof typeof mockUsers]) {
+            const profileFollowers = [...followers];
+            
+            profileFollowers.push({
+              id: user.id,
+              name: user.email?.split('@')[0] || authProfile?.username || 'User',
+              avatar: authProfile?.avatar_url || '',
+            });
+            
+            setFollowers(profileFollowers);
+          }
+        } else {
+          // Real database operation
+          const { error } = await supabase
+            .from('followers')
+            .insert({
+              follower_id: user.id,
+              following_id: userId,
+            });
+          
+          if (error) throw error;
+          
+          // Update local state
+          await fetchFollowers(userId);
+          if (isCurrentUser) {
+            await fetchFollowing(user.id);
+          }
+        }
+      }
+      
+      // Toggle following state
+      setIsFollowing(!isFollowing);
+      
+      toast({
+        title: isFollowing ? "Unfollowed" : "Following",
+        description: isFollowing 
+          ? `You are no longer following ${profileData?.username || 'this user'}` 
+          : `You are now following ${profileData?.username || 'this user'}`
+      });
+    } catch (error) {
+      console.error('Error updating follow status:', error);
+      toast({
+        title: "Error",
+        description: "There was an error updating your follow status",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSendMessage = () => {
