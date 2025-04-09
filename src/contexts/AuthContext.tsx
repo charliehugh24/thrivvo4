@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { Tables } from '@/integrations/supabase/types';
 
-interface ProfileType extends Tables<'profiles'> {}
+type ProfileType = Tables['profiles']; 
 
 interface AuthContextType {
   user: User | null;

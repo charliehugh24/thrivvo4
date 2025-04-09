@@ -17,7 +17,52 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tables } from '@/integrations/supabase/types';
 
-type ProfileData = Tables<'profiles'>;
+type ProfileData = Tables['profiles'];
+
+const mockUsers = {
+  'user-1': {
+    id: 'user-1',
+    username: 'Alex Johnson',
+    avatar_url: '/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png',
+    verified: true,
+    bio: 'Adventure seeker and music lover',
+    location: 'San Francisco, CA',
+    interests: ['music', 'hiking', 'photography']
+  },
+  'user-2': {
+    id: 'user-2',
+    username: 'Sam Rivera',
+    avatar_url: null,
+    bio: 'Food enthusiast and traveler',
+    location: 'Chicago, IL',
+    interests: ['food', 'travel', 'cooking']
+  },
+  'user-3': {
+    id: 'user-3',
+    username: 'Taylor Morgan',
+    avatar_url: '/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png',
+    verified: true,
+    bio: 'Tech geek and coffee addict',
+    location: 'Austin, TX',
+    interests: ['technology', 'coffee', 'gaming']
+  },
+  'user-4': {
+    id: 'user-4',
+    username: 'Jordan Kim',
+    avatar_url: null,
+    bio: 'Fitness instructor and wellness coach',
+    location: 'Denver, CO',
+    interests: ['fitness', 'nutrition', 'meditation']
+  },
+  'user-5': {
+    id: 'user-5',
+    username: 'Casey Lopez',
+    avatar_url: '/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png',
+    bio: 'Artist and creative mind',
+    location: 'Portland, OR',
+    interests: ['art', 'design', 'music']
+  }
+};
 
 const Profile = () => {
   const { userId } = useParams();
@@ -39,15 +84,18 @@ const Profile = () => {
         if (userId && userId !== user?.id) {
           setIsCurrentUser(false);
           
-          // Fetch the other user's profile
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-          
-          if (error) throw error;
-          setProfileData(data as ProfileData);
+          if (userId.startsWith('user-') && mockUsers[userId as keyof typeof mockUsers]) {
+            setProfileData(mockUsers[userId as keyof typeof mockUsers] as ProfileData);
+          } else {
+            const { data, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', userId)
+              .single();
+            
+            if (error) throw error;
+            setProfileData(data as ProfileData);
+          }
         } else {
           setIsCurrentUser(true);
           setProfileData(authProfile as ProfileData);
@@ -185,7 +233,15 @@ const Profile = () => {
                 <Button 
                   variant={isFollowing ? "outline" : "default"}
                   className={isFollowing ? "bg-white" : "bg-thrivvo-teal hover:bg-thrivvo-teal/90"}
-                  onClick={handleFollow}
+                  onClick={() => {
+                    setIsFollowing(!isFollowing);
+                    toast({
+                      title: isFollowing ? "Unfollowed" : "Following",
+                      description: isFollowing 
+                        ? `You are no longer following ${profileData?.username || 'this user'}` 
+                        : `You are now following ${profileData?.username || 'this user'}`
+                    });
+                  }}
                 >
                   <Users className="h-4 w-4 mr-2" />
                   {isFollowing ? 'Following' : 'Follow'}
@@ -194,7 +250,12 @@ const Profile = () => {
                 <Button 
                   variant="outline" 
                   className="bg-white text-foreground border-input"
-                  onClick={handleSendMessage}
+                  onClick={() => {
+                    toast({
+                      title: "Message initiated",
+                      description: `Started a conversation with ${profileData?.username || 'this user'}`,
+                    });
+                  }}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Message

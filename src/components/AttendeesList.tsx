@@ -66,7 +66,6 @@ const AttendeesList: React.FC<AttendeesListProps> = ({ eventId }) => {
 
   useEffect(() => {
     // Simulate API call to get attendees for a specific event
-    // In a real app, this would be an actual API call
     const fetchAttendees = async () => {
       setLoading(true);
       
