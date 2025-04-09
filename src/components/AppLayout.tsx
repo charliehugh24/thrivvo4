@@ -1,9 +1,10 @@
 
 import React, { ReactNode } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SearchIcon, BellIcon, UserIcon, PlusIcon } from 'lucide-react';
+import { SearchIcon, BellIcon, UserIcon, PlusIcon, CrownIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DirectMessages from './DirectMessages';
+import { Button } from './ui/button';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -28,6 +29,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           </div>
           
           <div className="flex items-center gap-2">
+            <Link to="/subscription">
+              <Button variant="ghost" size="sm" className="text-thrivvo-teal flex items-center gap-1 font-medium">
+                <CrownIcon size={14} />
+                Thrivvo+
+              </Button>
+            </Link>
             <DirectMessages />
           </div>
         </div>
