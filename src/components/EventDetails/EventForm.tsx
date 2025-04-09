@@ -8,6 +8,14 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogDescription
+} from '@/components/ui/dialog';
 import { Calendar } from 'lucide-react';
 import LocationSearch from './LocationSearch';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +31,7 @@ interface EventData {
   ticketLimit?: string;
   salesDeadline?: string;
   ticketType?: 'digital' | 'external';
+  externalTicketLink?: string;
   paymentMethod?: string;
   refundPolicy?: string;
 }
@@ -36,6 +45,8 @@ interface EventFormProps {
 
 const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, onNext }) => {
   const { toast } = useToast();
+  const [showExternalLinkDialog, setShowExternalLinkDialog] = useState(false);
+  const [externalLink, setExternalLink] = useState(eventData.externalTicketLink || '');
 
   // Handle switch toggle for paid events
   const handleIsPaidChange = (checked: boolean) => {
@@ -45,6 +56,24 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
   // Make sure location changes are properly handled
   const handleLocationChange = (location: string) => {
     onDataChange('location', location);
+  };
+
+  // Handle ticket type change
+  const handleTicketTypeChange = (value: 'digital' | 'external') => {
+    onDataChange('ticketType', value);
+    if (value === 'external') {
+      setShowExternalLinkDialog(true);
+    }
+  };
+
+  // Save external link
+  const handleSaveExternalLink = () => {
+    onDataChange('externalTicketLink', externalLink);
+    setShowExternalLinkDialog(false);
+    toast({
+      title: "External link saved",
+      description: "The external ticket link has been saved.",
+    });
   };
 
   return (
@@ -140,7 +169,7 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
               <Label>Ticket Type</Label>
               <RadioGroup 
                 value={eventData.ticketType || 'digital'} 
-                onValueChange={(value) => onDataChange('ticketType', value)}
+                onValueChange={(value: 'digital' | 'external') => handleTicketTypeChange(value)}
               >
                 <div className="flex items-center space-x-2 py-2">
                   <RadioGroupItem value="digital" id="digital" />
@@ -148,7 +177,7 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
                 </div>
                 <div className="flex items-center space-x-2 py-2">
                   <RadioGroupItem value="external" id="external" />
-                  <Label htmlFor="external">External Link (e.g., Eventbrite)</Label>
+                  <Label htmlFor="external">External Link</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -179,6 +208,38 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
           Continue to Photos
         </Button>
       </div>
+
+      {/* External Ticket Link Dialog */}
+      <Dialog open={showExternalLinkDialog} onOpenChange={setShowExternalLinkDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add External Ticket Link</DialogTitle>
+            <DialogDescription>
+              Enter the URL where attendees can purchase tickets for your event.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="externalLink">Ticket Link URL</Label>
+              <Input
+                id="externalLink"
+                type="text"
+                placeholder="https://..."
+                value={externalLink}
+                onChange={(e) => setExternalLink(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={() => setShowExternalLinkDialog(false)} variant="outline">
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSaveExternalLink}>
+              Save Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

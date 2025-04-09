@@ -6,9 +6,25 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import EventForm from '@/components/EventDetails/EventForm';
 
+interface EventData {
+  type: string;
+  name: string;
+  description: string;
+  location: string;
+  date: string;
+  isPaid: boolean;
+  price?: string;
+  ticketLimit?: string;
+  salesDeadline?: string;
+  ticketType?: 'digital' | 'external';
+  externalTicketLink?: string;
+  paymentMethod?: string;
+  refundPolicy?: string;
+}
+
 const EventDetailsStep = () => {
   const navigate = useNavigate();
-  const [eventData, setEventData] = useState({
+  const [eventData, setEventData] = useState<EventData>({
     type: '',
     name: '',
     description: '',
