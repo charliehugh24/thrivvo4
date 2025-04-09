@@ -56,7 +56,12 @@ const Notifications = () => {
   };
   
   const handleMessageUser = (userId: string) => {
-    navigate(`?message=${userId}`);
+    // Added specific default message for Sam Rivera
+    const messageText = userId === 'user-2' 
+      ? 'Hello, I wanted to connect with you!' 
+      : '';
+    
+    navigate(`?message=${userId}${messageText ? `&text=${encodeURIComponent(messageText)}` : ''}`);
   };
   
   return (
@@ -189,7 +194,10 @@ const Notifications = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => handleMessageUser(user.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMessageUser(user.id);
+                    }}
                   >
                     <MessageCircle size={16} className="mr-1" />
                     Message

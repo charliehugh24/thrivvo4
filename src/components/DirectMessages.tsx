@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -45,12 +44,23 @@ const mockConversations = [
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
     unread: false,
   },
+  {
+    id: '4',
+    user: {
+      id: 'user-2',
+      name: 'Sam Rivera',
+      avatar: 'https://randomuser.me/api/portraits/women/79.jpg',
+    },
+    lastMessage: 'Hello, I wanted to connect with you!',
+    timestamp: new Date(Date.now() - 1000 * 60 * 10), // 10 minutes ago
+    unread: true,
+  },
 ];
 
 // Map for mock profile IDs to conversation IDs
 const mockUserIdToConvId: Record<string, string> = {
   'user-1': '2', // Alex Johnson
-  'user-2': '4', // Sam Rivera - will create dynamically
+  'user-2': '4', // Sam Rivera
   'user-3': '5', // Taylor Morgan - will create dynamically
   'user-4': '6', // Jordan Kim - will create dynamically
   'user-5': '7', // Casey Lopez - will create dynamically
@@ -167,6 +177,14 @@ const mockChatHistory: Record<string, ChatMessage[]> = {
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
     },
   ],
+  '4': [
+    {
+      id: 'm1',
+      sender: 'me',
+      text: 'Hello, I wanted to connect with you!',
+      timestamp: new Date(Date.now() - 1000 * 60 * 10),
+    }
+  ],
 };
 
 // Mock user data for additional conversations
@@ -177,7 +195,7 @@ const mockUserProfiles = {
   },
   'user-2': {
     name: 'Sam Rivera',
-    avatar: null,
+    avatar: 'https://randomuser.me/api/portraits/women/79.jpg',
   },
   'user-3': {
     name: 'Taylor Morgan',
