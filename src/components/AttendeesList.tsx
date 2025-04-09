@@ -82,9 +82,8 @@ const AttendeesList: React.FC<AttendeesListProps> = ({ eventId }) => {
   }, [eventId]);
 
   const handleViewProfile = (userId: string) => {
-    // In a real app, navigate to the actual user profile page
-    // For now, navigate to the profile page (our own profile)
-    navigate('/profile');
+    // Navigate to specific user profile page using the userId
+    navigate(`/profile/${userId}`);
   };
 
   if (loading) {
@@ -144,6 +143,7 @@ const AttendeesList: React.FC<AttendeesListProps> = ({ eventId }) => {
             size="sm"
             className="h-8 w-8 p-0"
             onClick={() => handleViewProfile(attendee.id)}
+            aria-label={`View ${attendee.name}'s profile`}
           >
             <ArrowRight size={16} />
           </Button>
