@@ -232,11 +232,12 @@ const Profile = () => {
   
   const fetchFollowers = async (profileId: string) => {
     try {
+      // Query followers: People who follow the profile
       const { data, error } = await supabase
         .from('followers')
         .select(`
           follower_id,
-          profiles:follower_id (
+          profiles!followers_follower_id_fkey (
             id,
             username,
             avatar_url
@@ -261,11 +262,12 @@ const Profile = () => {
   
   const fetchFollowing = async (profileId: string) => {
     try {
+      // Query following: People the profile follows
       const { data, error } = await supabase
         .from('followers')
         .select(`
           following_id,
-          profiles:following_id (
+          profiles!followers_following_id_fkey (
             id,
             username,
             avatar_url
