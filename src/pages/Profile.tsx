@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -13,7 +12,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Edit, Save, Calendar, Plus, Camera, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Temporary mock data for the profile
 const profileData = {
   name: "Alex Johnson",
   age: 28,
@@ -27,10 +25,6 @@ const profileData = {
   attendedEvents: 24
 };
 
-// Mock event data for the events tab
-import { Event } from '@/types';
-import { mockEvents } from '@/data/mockData';
-
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -40,9 +34,9 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("about");
   const [eventsSubTab, setEventsSubTab] = useState("myEvents");
   const [userCreatedEvents, setUserCreatedEvents] = useState<Event[]>([]);
+  const [attendingEvents, setAttendingEvents] = useState(mockEvents.slice(0, 3));
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Get user created events from localStorage
   useEffect(() => {
     const storedEvents = localStorage.getItem('userCreatedEvents');
     if (storedEvents) {
@@ -56,15 +50,10 @@ const Profile = () => {
     }
   }, []);
 
-  // Filter events created by the current user (using the mock user ID for now)
-  // In a real app, you would compare against the actual logged-in user ID
   const createdEvents = [
     ...userCreatedEvents,
     ...mockEvents.filter(event => event.host.id === "user-1")
   ];
-  
-  // Just using some events for demo
-  const attendingEvents = mockEvents.slice(0, 3); 
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -89,7 +78,6 @@ const Profile = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle image upload
   const handleAvatarClick = () => {
     if (isEditing && fileInputRef.current) {
       fileInputRef.current.click();
@@ -112,21 +100,20 @@ const Profile = () => {
     }
   };
 
-  // Handle swipe actions for the EventCard component
-  const handleSwipeLeft = () => {
-    // For now, just a placeholder for the swipe left action
-    console.log("Swiped left on event");
+  const handleCancelCreatedEvent = (eventId: string) => {
+    const updatedEvents = userCreatedEvents.filter(event => event.id !== eventId);
+    setUserCreatedEvents(updatedEvents);
+    localStorage.setItem('userCreatedEvents', JSON.stringify(updatedEvents));
   };
 
-  const handleSwipeRight = () => {
-    // For now, just a placeholder for the swipe right action
-    console.log("Swiped right on event");
+  const handleCancelAttendingEvent = (eventId: string) => {
+    const updatedEvents = attendingEvents.filter(event => event.id !== eventId);
+    setAttendingEvents(updatedEvents);
   };
 
   return (
     <AppLayout activeTab="profile">
       <div className="p-4 space-y-6">
-        {/* Profile header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">My Profile</h1>
           <Button 
@@ -142,10 +129,8 @@ const Profile = () => {
           </Button>
         </div>
 
-        {/* Profile info */}
         <div className="flex flex-col items-center space-y-4">
           <div className="flex justify-center w-full">
-            {/* Hidden file input */}
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -279,7 +264,6 @@ const Profile = () => {
           )}
         </div>
 
-        {/* Tabs for About/Events */}
         <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full pt-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="about">About</TabsTrigger>
@@ -319,7 +303,6 @@ const Profile = () => {
               </Button>
             </div>
             
-            {/* Sub-tabs for Events created vs Events attending */}
             <div className="border-b">
               <div className="flex space-x-4">
                 <button
@@ -337,13 +320,14 @@ const Profile = () => {
               </div>
             </div>
             
-            {/* Events content based on sub-tab */}
             {eventsSubTab === 'myEvents' && (
               <div className="space-y-4">
                 {createdEvents.length > 0 ? (
                   <EventList 
                     events={createdEvents} 
                     emptyMessage="You haven't created any events yet" 
+                    showCancelOption={true}
+                    onCancelEvent={handleCancelCreatedEvent}
                   />
                 ) : (
                   <div className="text-center p-8">
@@ -365,6 +349,8 @@ const Profile = () => {
                   <EventList
                     events={attendingEvents}
                     emptyMessage="You're not attending any events yet"
+                    showCancelOption={true}
+                    onCancelEvent={handleCancelAttendingEvent}
                   />
                 ) : (
                   <div className="text-center p-8">

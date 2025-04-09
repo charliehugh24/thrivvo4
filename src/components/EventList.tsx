@@ -1,24 +1,38 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, CheckCircle, DollarSign, Share2 } from 'lucide-react';
+import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, CheckCircle, DollarSign, Share2, X } from 'lucide-react';
 import { Event } from '@/types';
 import { formatDistanceToNow, isValid } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface EventListProps {
   events: Event[];
   emptyMessage?: string;
+  showCancelOption?: boolean;
+  onCancelEvent?: (eventId: string) => void;
 }
 
 const EventList: React.FC<EventListProps> = ({ 
   events, 
-  emptyMessage = "No events found" 
+  emptyMessage = "No events found",
+  showCancelOption = false,
+  onCancelEvent
 }) => {
   const { toast } = useToast();
+  const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
+  const [eventToCancel, setEventToCancel] = React.useState<Event | null>(null);
 
   if (events.length === 0) {
     return (
@@ -78,6 +92,25 @@ const EventList: React.FC<EventListProps> = ({
     }).catch(err => {
       console.error('Failed to copy: ', err);
     });
+  };
+
+  const handleCancelClick = (event: Event, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEventToCancel(event);
+    setCancelDialogOpen(true);
+  };
+
+  const confirmCancel = () => {
+    if (eventToCancel && onCancelEvent) {
+      onCancelEvent(eventToCancel.id);
+      toast({
+        title: "Event cancelled",
+        description: `You have cancelled "${eventToCancel.title}"`,
+      });
+    }
+    setCancelDialogOpen(false);
+    setEventToCancel(null);
   };
 
   return (
@@ -153,16 +186,48 @@ const EventList: React.FC<EventListProps> = ({
               </div>
             </div>
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 h-7 w-7 rounded-full bg-background/80 hover:bg-background shadow-sm"
-            onClick={(e) => handleShare(event, e)}
-          >
-            <Share2 size={14} />
-          </Button>
+          <div className="absolute top-2 right-2 flex space-x-1">
+            {showCancelOption && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-full bg-background/80 hover:bg-destructive hover:text-white shadow-sm"
+                onClick={(e) => handleCancelClick(event, e)}
+              >
+                <X size={14} />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-full bg-background/80 hover:bg-background shadow-sm"
+              onClick={(e) => handleShare(event, e)}
+            >
+              <Share2 size={14} />
+            </Button>
+          </div>
         </div>
       ))}
+
+      {/* Confirmation Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Event</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel {eventToCancel?.title}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+              Keep Event
+            </Button>
+            <Button variant="destructive" onClick={confirmCancel}>
+              Cancel Event
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
