@@ -114,7 +114,7 @@ const mockFollowing = {
 };
 
 const Profile = () => {
-  const { userId } = useParams();
+  const { userId } = useParams<{ userId?: string }>();
   const navigate = useNavigate();
   const { user, profile: authProfile, refreshProfile } = useAuth();
   
@@ -134,39 +134,41 @@ const Profile = () => {
       setLoading(true);
       
       try {
+        // If we have a userId param and it's not the current user's ID
         if (userId && userId !== user?.id) {
           setIsCurrentUser(false);
           
-          // Load profile data
-          if (userId.startsWith('user-') && mockUsers[userId as keyof typeof mockUsers]) {
+          // Check if this is a mock user first (starting with "user-")
+          if (userId.startsWith('user-')) {
+            console.log('Loading mock user profile:', userId);
             // Handle mock user profiles
-            setProfileData(mockUsers[userId as keyof typeof mockUsers] as ProfileData);
-            
-            // Load mock followers/following for demo users
-            const mockUserFollowers = userId && mockFollowers[userId as keyof typeof mockFollowers] 
-              ? mockFollowers[userId as keyof typeof mockFollowers] 
-              : [];
-            
-            const mockUserFollowing = userId && mockFollowing[userId as keyof typeof mockFollowing] 
-              ? mockFollowing[userId as keyof typeof mockFollowing] 
-              : [];
-            
-            setFollowers(mockUserFollowers);
-            setFollowing(mockUserFollowing);
-            
-            // Check if current user is following this profile
-            if (user?.id) {
-              if (user.id.startsWith('user-')) {
-                const currentUserFollowing = mockFollowing[user.id as keyof typeof mockFollowing] || [];
-                setIsFollowing(currentUserFollowing.some(f => f.id === userId));
-              } else {
-                // Check if real user is following this mock user
-                const mockProfileFollowers = mockFollowers[userId as keyof typeof mockFollowers] || [];
-                setIsFollowing(mockProfileFollowers.some(f => f.id === user.id));
+            const mockUser = mockUsers[userId as keyof typeof mockUsers];
+            if (mockUser) {
+              setProfileData(mockUser as ProfileData);
+              
+              // Load mock followers/following for demo users
+              const mockUserFollowers = mockFollowers[userId as keyof typeof mockFollowers] || [];
+              const mockUserFollowing = mockFollowing[userId as keyof typeof mockFollowing] || [];
+              
+              setFollowers(mockUserFollowers);
+              setFollowing(mockUserFollowing);
+              
+              // Check if current user is following this profile
+              if (user?.id) {
+                if (user.id.startsWith('user-')) {
+                  const currentUserFollowing = mockFollowing[user.id as keyof typeof mockFollowing] || [];
+                  setIsFollowing(currentUserFollowing.some(f => f.id === userId));
+                } else {
+                  // Check if real user is following this mock user
+                  const mockProfileFollowers = mockFollowers[userId as keyof typeof mockFollowers] || [];
+                  setIsFollowing(mockProfileFollowers.some(f => f.id === user.id));
+                }
               }
+            } else {
+              throw new Error('Mock profile not found');
             }
           } else {
-            // For real user IDs, validate UUID format before querying
+            // For real user IDs, validate UUID format before querying Supabase
             const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
             
             if (!isValidUUID) {
@@ -232,7 +234,7 @@ const Profile = () => {
           description: "The requested profile could not be loaded",
           variant: "destructive"
         });
-        navigate('/profile');
+        navigate('/'); // Navigate to home page on error instead of back to profile
       } finally {
         setLoading(false);
       }
