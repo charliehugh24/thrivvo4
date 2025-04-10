@@ -59,3 +59,17 @@ export interface User {
   };
   distance?: number; // calculated on the fly based on current location
 }
+
+// Add a Profile interface that matches the Supabase profiles table structure
+export interface Profile {
+  id: string;
+  username: string;
+  bio: string;
+  location: string;
+  avatar_url: string;
+  interests: string[];
+  updated_at: string;
+  created_at: string;
+  verified: boolean;
+  distance_preference: number; // Define the distance_preference property
+}

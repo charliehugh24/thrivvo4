@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User } from '@/types';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,11 +14,18 @@ interface UsersNearbyProps {
 }
 
 const UsersNearby: React.FC<UsersNearbyProps> = ({ users }) => {
-  const handleConnect = (user: User) => {
+  const navigate = useNavigate();
+  
+  const handleConnect = (e: React.MouseEvent, user: User) => {
+    e.stopPropagation(); // Prevent card click from triggering
     toast({
       title: "Request sent!",
       description: `We've let ${user.name} know you want to hang out`,
     });
+  };
+  
+  const handleCardClick = (userId: string) => {
+    navigate(`/profile/${userId}`);
   };
 
   return (
@@ -30,7 +38,11 @@ const UsersNearby: React.FC<UsersNearbyProps> = ({ users }) => {
       <ScrollArea className="w-full whitespace-nowrap pb-1">
         <div className="flex gap-3">
           {users.map((user) => (
-            <Card key={user.id} className="w-[180px] flex-shrink-0">
+            <Card 
+              key={user.id} 
+              className="w-[180px] flex-shrink-0 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleCardClick(user.id)}
+            >
               <CardContent className="p-3 space-y-3">
                 <div className="flex justify-between items-start">
                   <Avatar className="h-12 w-12">
@@ -70,7 +82,7 @@ const UsersNearby: React.FC<UsersNearbyProps> = ({ users }) => {
                   size="sm"
                   variant="outline"
                   className="w-full"
-                  onClick={() => handleConnect(user)}
+                  onClick={(e) => handleConnect(e, user)}
                 >
                   Connect
                 </Button>
