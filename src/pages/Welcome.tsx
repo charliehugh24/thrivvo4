@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { Upload, ChevronRight } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
+import LocationSearch from '@/components/EventDetails/LocationSearch';
 
 type ProfileData = Tables<'profiles'>;
 
@@ -50,6 +52,10 @@ const Welcome = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setProfile(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleLocationChange = (location: string) => {
+    setProfile(prev => ({ ...prev, location }));
   };
   
   const toggleInterest = (interest: string) => {
@@ -231,13 +237,9 @@ const Welcome = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  name="location"
-                  placeholder="Where are you based?"
-                  value={profile.location}
-                  onChange={handleInputChange}
+                <LocationSearch
+                  location={profile.location}
+                  onLocationChange={handleLocationChange}
                 />
               </div>
             </div>
