@@ -50,6 +50,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string | null
+          distance_preference: number | null
           id: string
           interests: string[] | null
           location: string | null
@@ -61,6 +62,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          distance_preference?: number | null
           id: string
           interests?: string[] | null
           location?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          distance_preference?: number | null
           id?: string
           interests?: string[] | null
           location?: string | null

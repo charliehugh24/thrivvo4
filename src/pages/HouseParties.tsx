@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -51,7 +50,7 @@ const HouseParties = () => {
     // Apply distance filter if available
     if (userProfile?.distance_preference) {
       events = events.filter(event => 
-        event.location.distance <= userProfile.distance_preference!
+        event.location.distance <= userProfile.distance_preference
       );
     }
     

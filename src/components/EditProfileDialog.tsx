@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Upload } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
+import { Slider } from '@/components/ui/slider';
 
 type ProfileData = Tables<'profiles'>;
 
@@ -33,6 +34,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
     bio: '',
     location: '',
     interests: [] as string[],
+    distance_preference: 15,
   });
   
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -53,6 +55,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
         bio: currentProfile.bio || '',
         location: currentProfile.location || '',
         interests: currentProfile.interests || [],
+        distance_preference: currentProfile.distance_preference || 15,
       });
       
       if (currentProfile.avatar_url) {
@@ -64,6 +67,10 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleDistanceChange = (value: number[]) => {
+    setProfileData(prev => ({ ...prev, distance_preference: value[0] }));
   };
   
   const toggleInterest = (interest: string) => {
@@ -137,6 +144,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
           location: profileData.location,
           interests: profileData.interests,
           avatar_url: avatarUrl,
+          distance_preference: profileData.distance_preference,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -229,6 +237,21 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
               value={profileData.location}
               onChange={handleInputChange}
             />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Event Distance Preference ({profileData.distance_preference} miles)</Label>
+            <Slider 
+              value={[profileData.distance_preference]} 
+              min={1} 
+              max={50} 
+              step={1} 
+              onValueChange={handleDistanceChange} 
+              className="py-4"
+            />
+            <p className="text-xs text-muted-foreground">
+              Only show events within {profileData.distance_preference} miles of your location
+            </p>
           </div>
           
           <div className="space-y-2">

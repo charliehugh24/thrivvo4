@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import AppLayout from '@/components/AppLayout';
@@ -26,7 +25,6 @@ const Index = () => {
   const [userProfile, setUserProfile] = useState<Tables<'profiles'> | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Fetch user profile data
   useEffect(() => {
     const fetchUserProfile = async () => {
       setLoading(true);
@@ -52,12 +50,10 @@ const Index = () => {
   useEffect(() => {
     let filteredEvents = [...mockEvents];
     
-    // Filter by category if selected
     if (selectedCategory) {
       filteredEvents = filteredEvents.filter(event => event.category === selectedCategory);
     }
     
-    // Filter by user interests if available
     if (userProfile?.interests && userProfile.interests.length > 0 && !selectedCategory) {
       filteredEvents = filteredEvents.filter(event => 
         userProfile.interests?.includes(event.category) || 
@@ -65,10 +61,9 @@ const Index = () => {
       );
     }
     
-    // Filter by distance if available
     if (userProfile?.distance_preference) {
       filteredEvents = filteredEvents.filter(event => 
-        event.location.distance <= userProfile.distance_preference!
+        event.location.distance <= userProfile.distance_preference
       );
     }
     
