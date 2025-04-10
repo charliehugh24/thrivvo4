@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -140,6 +139,7 @@ const Profile = () => {
           
           // Load profile data
           if (userId.startsWith('user-') && mockUsers[userId as keyof typeof mockUsers]) {
+            // Handle mock user profiles
             setProfileData(mockUsers[userId as keyof typeof mockUsers] as ProfileData);
             
             // Load mock followers/following for demo users
@@ -166,14 +166,27 @@ const Profile = () => {
               }
             }
           } else {
+            // For real user IDs, validate UUID format before querying
+            const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+            
+            if (!isValidUUID) {
+              console.error('Invalid UUID format:', userId);
+              throw new Error('Invalid user ID format');
+            }
+            
             // Load real user profile from database
             const { data, error } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', userId)
-              .single();
+              .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no profile is found
             
             if (error) throw error;
+            
+            if (!data) {
+              throw new Error('Profile not found');
+            }
+            
             setProfileData(data as ProfileData);
             
             // Load real followers and following

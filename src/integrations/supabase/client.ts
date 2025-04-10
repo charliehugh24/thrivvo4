@@ -11,13 +11,5 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-// Add this type extension to ensure TypeScript recognizes the distance_preference property
-declare module '@/integrations/supabase/types' {
-  interface Tables {
-    profiles: {
-      Row: {
-        distance_preference?: number;
-      };
-    };
-  }
-}
+// Instead of using declare module to extend the types, we'll make sure the Profile interface in types/index.ts
+// is properly set up to handle the distance_preference property
