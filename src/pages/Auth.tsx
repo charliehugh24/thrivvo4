@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -54,34 +53,25 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      // Sign up with auto-confirm email (signIn right after)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: window.location.origin,
-          data: {
-            email_confirmed: true
-          }
-        }
       });
       
       if (error) throw error;
       
-      if (data.user) {
-        // Auto sign in after signup
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        
-        if (signInError) throw signInError;
-        
+      if (data.session) {
         toast({
           title: "Account created!",
           description: "You have been signed in successfully."
         });
         navigate('/welcome');
+      } else {
+        // Email confirmation may be required
+        toast({
+          title: "Account created!",
+          description: "Please check your email for a confirmation link."
+        });
       }
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -110,6 +100,7 @@ const Auth = () => {
     setLoading(true);
     
     try {
+      // Sign in with email and password
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -117,7 +108,7 @@ const Auth = () => {
       
       if (error) throw error;
       
-      if (data.user) {
+      if (data.session) {
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in."
@@ -365,7 +356,7 @@ const Auth = () => {
                           variant="link" 
                           className="p-0 h-auto" 
                           type="button"
-                          onClick={() => setResetEmailSent(true)}
+                          onClick={() => navigate('/forgot-password')}
                         >
                           Forgot password?
                         </Button>
@@ -437,7 +428,6 @@ const Auth = () => {
     );
   }
   
-  // Fallback return (should never be reached)
   return null;
 };
 
