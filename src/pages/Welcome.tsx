@@ -12,6 +12,7 @@ import { toast } from '@/components/ui/use-toast';
 import { Upload, ChevronRight } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 import LocationSearch from '@/components/EventDetails/LocationSearch';
+import { Slider } from '@/components/ui/slider';
 
 type ProfileData = Tables<'profiles'>;
 
@@ -26,6 +27,7 @@ const Welcome = () => {
     bio: '',
     location: '',
     interests: [] as string[],
+    distance_preference: 15, // Default to 15 miles
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -56,6 +58,10 @@ const Welcome = () => {
   
   const handleLocationChange = (location: string) => {
     setProfile(prev => ({ ...prev, location }));
+  };
+  
+  const handleDistanceChange = (value: number[]) => {
+    setProfile(prev => ({ ...prev, distance_preference: value[0] }));
   };
   
   const toggleInterest = (interest: string) => {
@@ -135,6 +141,7 @@ const Welcome = () => {
           location: profile.location,
           interests: profile.interests,
           avatar_url: avatarUrl,
+          distance_preference: profile.distance_preference,
           updated_at: new Date().toISOString()
         })
         .eq('id', userId);
@@ -242,6 +249,21 @@ const Welcome = () => {
                   onLocationChange={handleLocationChange}
                 />
               </div>
+              
+              <div className="space-y-2">
+                <Label>Event Distance Preference ({profile.distance_preference} miles)</Label>
+                <Slider 
+                  value={[profile.distance_preference]} 
+                  min={1} 
+                  max={50} 
+                  step={1} 
+                  onValueChange={handleDistanceChange} 
+                  className="py-4"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Only show events within {profile.distance_preference} miles of your location
+                </p>
+              </div>
             </div>
           </div>
         );
@@ -251,7 +273,7 @@ const Welcome = () => {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-center">Select Your Interests</h2>
             <p className="text-center text-muted-foreground">
-              What are you passionate about? Select interests to help us recommend events for you.
+              What are you passionate about? Select interests to help us recommend events that match your preferences.
             </p>
             
             <div className="flex flex-wrap gap-2 py-4 justify-center">

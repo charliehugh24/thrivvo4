@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import AppLayout from '@/components/AppLayout';
@@ -12,6 +13,8 @@ import { LayoutList, LayoutGrid, CheckCircle, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -20,12 +23,53 @@ const Index = () => {
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('list');
+  const [userProfile, setUserProfile] = useState<Tables<'profiles'> | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (!error && data) {
+          setUserProfile(data);
+        }
+      }
+      setLoading(false);
+    };
+    
+    fetchUserProfile();
+  }, []);
   
   useEffect(() => {
     let filteredEvents = [...mockEvents];
     
+    // Filter by category if selected
     if (selectedCategory) {
-      filteredEvents = mockEvents.filter(event => event.category === selectedCategory);
+      filteredEvents = filteredEvents.filter(event => event.category === selectedCategory);
+    }
+    
+    // Filter by user interests if available
+    if (userProfile?.interests && userProfile.interests.length > 0 && !selectedCategory) {
+      filteredEvents = filteredEvents.filter(event => 
+        userProfile.interests?.includes(event.category) || 
+        event.vibe.some(v => userProfile.interests?.includes(v))
+      );
+    }
+    
+    // Filter by distance if available
+    if (userProfile?.distance_preference) {
+      filteredEvents = filteredEvents.filter(event => 
+        event.location.distance <= userProfile.distance_preference!
+      );
     }
     
     if (filteredEvents.length > 0) {
@@ -37,7 +81,7 @@ const Index = () => {
     }
     
     setCurrentEventIndex(0);
-  }, [selectedCategory]);
+  }, [selectedCategory, userProfile]);
 
   const handleCategorySelect = (category: EventCategory | null) => {
     if (category === 'party') {
@@ -88,7 +132,13 @@ const Index = () => {
           onSelectCategory={handleCategorySelect}
         />
         
-        {mainEvent && (
+        {loading && (
+          <div className="text-center py-4">
+            <p>Loading your personalized events...</p>
+          </div>
+        )}
+        
+        {!loading && mainEvent && (
           <div className="my-6">
             <h2 className="text-lg font-semibold mb-3">Featured Event</h2>
             <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
@@ -140,6 +190,8 @@ const Index = () => {
                   })}</span>
                   <span className="mx-2">•</span>
                   <span>{mainEvent.location.name}</span>
+                  <span className="mx-2">•</span>
+                  <span>{mainEvent.location.distance} miles away</span>
                 </div>
                 <Button 
                   className="w-full mt-3 bg-thrivvo-teal text-white"
@@ -154,7 +206,11 @@ const Index = () => {
         
         <div>
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-semibold">More Events</h2>
+            <h2 className="text-lg font-semibold">
+              {!loading && userProfile?.interests && userProfile.interests.length > 0 && !selectedCategory 
+                ? 'Events Based on Your Interests' 
+                : 'More Events'}
+            </h2>
             <div className="flex border rounded-md overflow-hidden">
               <Button
                 variant="ghost"
@@ -202,9 +258,13 @@ const Index = () => {
               </>
             ) : (
               <div className="text-center p-8">
-                <h3 className="text-lg font-medium">No more events found</h3>
+                <h3 className="text-lg font-medium">
+                  {!loading && userProfile?.distance_preference 
+                    ? `No events found within ${userProfile.distance_preference} miles`
+                    : 'No events found'}
+                </h3>
                 <p className="text-muted-foreground">
-                  Try selecting a different category or check back later
+                  Try selecting a different category, increasing your distance preference, or check back later
                 </p>
               </div>
             )}

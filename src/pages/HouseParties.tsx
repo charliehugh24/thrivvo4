@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -11,15 +11,52 @@ import EventList from '@/components/EventList';
 import { mockEvents } from '@/data/mockData';
 import CategoryFilter from '@/components/CategoryFilter';
 import { EventCategory } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
 
 const HouseParties = () => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>('party');
+  const [userProfile, setUserProfile] = useState<Tables<'profiles'> | null>(null);
+  const [loading, setLoading] = useState(true);
   
-  // Filter events based on selected category
-  const filteredEvents = selectedCategory 
-    ? mockEvents.filter(event => event.category === selectedCategory)
-    : mockEvents;
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (!error && data) {
+          setUserProfile(data);
+        }
+      }
+      setLoading(false);
+    };
+    
+    fetchUserProfile();
+  }, []);
+  
+  // Filter events based on selected category and user preferences
+  const filteredEvents = (() => {
+    let events = selectedCategory 
+      ? mockEvents.filter(event => event.category === selectedCategory)
+      : mockEvents;
+    
+    // Apply distance filter if available
+    if (userProfile?.distance_preference) {
+      events = events.filter(event => 
+        event.location.distance <= userProfile.distance_preference!
+      );
+    }
+    
+    return events;
+  })();
   
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,16 +91,31 @@ const HouseParties = () => {
           onSelectCategory={handleCategorySelect} 
         />
         
-        {/* Events List */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">
-            {selectedCategory ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Events` : 'All Events'}
-          </h2>
-          <EventList 
-            events={filteredEvents} 
-            emptyMessage={`No ${selectedCategory || 'events'} found nearby`} 
-          />
-        </div>
+        {loading && (
+          <div className="text-center py-4">
+            <p>Loading events...</p>
+          </div>
+        )}
+        
+        {!loading && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">
+              {selectedCategory ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Events` : 'All Events'}
+              {userProfile?.distance_preference && (
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  (within {userProfile.distance_preference} miles)
+                </span>
+              )}
+            </h2>
+            <EventList 
+              events={filteredEvents} 
+              emptyMessage={userProfile?.distance_preference 
+                ? `No ${selectedCategory || 'events'} found within ${userProfile.distance_preference} miles` 
+                : `No ${selectedCategory || 'events'} found nearby`
+              } 
+            />
+          </div>
+        )}
         
         <Button 
           className="w-full bg-thrivvo-teal hover:bg-thrivvo-teal/90"
