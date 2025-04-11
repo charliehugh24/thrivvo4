@@ -25,9 +25,12 @@ const UsersNearby: React.FC<UsersNearbyProps> = ({ users }) => {
   };
   
   const handleCardClick = (userId: string) => {
-    // Safely navigate to the profile route
-    navigate(`/profile/${userId}`);
-    console.log(`Navigating to profile: ${userId}`);
+    // Ensure userId is properly formatted for profile navigation
+    const formattedUserId = userId.startsWith('user') ? userId : `user-${userId}`;
+    
+    // Navigate to the profile route
+    navigate(`/profile/${formattedUserId}`);
+    console.log(`Navigating to profile: ${formattedUserId}`);
   };
 
   return (

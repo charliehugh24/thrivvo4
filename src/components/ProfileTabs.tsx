@@ -3,6 +3,7 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import EventList from '@/components/EventList';
+import { MessageSquare, CalendarDays, Image } from 'lucide-react';
 
 interface ProfileTabsProps {
   userName: string;
@@ -15,6 +16,20 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   isCurrentUser,
   mockEvents
 }) => {
+  const hostedEvents = mockEvents.filter(event => event.host.name === userName);
+  const attendingEvents = mockEvents.slice(0, 2);
+  
+  // Content for empty states
+  const renderEmptyState = (icon: React.ReactNode, title: string, message: string) => (
+    <div className="flex flex-col items-center justify-center text-center py-12 px-4">
+      <div className="bg-muted rounded-full p-3 mb-3">
+        {icon}
+      </div>
+      <h3 className="text-lg font-medium mb-2">{title}</h3>
+      <p className="text-muted-foreground max-w-md">{message}</p>
+    </div>
+  );
+
   return (
     <Tabs defaultValue="events" className="flex-1">
       <div className="px-4 border-b">
@@ -35,14 +50,17 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Hosted Events</h3>
           
-          <EventList 
-            events={mockEvents.filter(event => event.host.name === userName)}
-            emptyMessage={
+          {hostedEvents.length > 0 ? (
+            <EventList events={hostedEvents} />
+          ) : (
+            renderEmptyState(
+              <CalendarDays className="h-6 w-6 text-muted-foreground" />,
+              "No hosted events yet",
               isCurrentUser 
-                ? "You haven't hosted any events yet. Create your first event!" 
+                ? "When you create events, they'll appear here. Start by creating your first event!" 
                 : `${userName} hasn't hosted any events yet.`
-            }
-          />
+            )
+          )}
         </div>
       </TabsContent>
 
@@ -50,14 +68,17 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Events Attending</h3>
           
-          <EventList 
-            events={mockEvents.slice(0, 2)} 
-            emptyMessage={
+          {attendingEvents.length > 0 ? (
+            <EventList events={attendingEvents} />
+          ) : (
+            renderEmptyState(
+              <CalendarDays className="h-6 w-6 text-muted-foreground" />,
+              "No upcoming events",
               isCurrentUser 
-                ? "You're not attending any upcoming events." 
+                ? "When you RSVP to events, they'll appear here. Explore events to find something that interests you!" 
                 : `${userName} is not attending any upcoming events.`
-            }
-          />
+            )
+          )}
         </div>
       </TabsContent>
 
@@ -80,9 +101,11 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
               ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-8">
-              {userName} hasn't shared any photos yet.
-            </p>
+            renderEmptyState(
+              <Image className="h-6 w-6 text-muted-foreground" />,
+              "No photos shared yet",
+              `${userName} hasn't shared any photos from events yet.`
+            )
           )}
         </div>
       </TabsContent>

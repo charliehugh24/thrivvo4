@@ -25,6 +25,16 @@ const FollowersList: React.FC<FollowersListProps> = ({
     return name.charAt(0).toUpperCase();
   };
   
+  const handleProfileClick = (userId: string) => {
+    // Ensure consistent ID format for navigation
+    const formattedId = userId.startsWith('user') && !userId.includes('-') 
+      ? `user-${userId.slice(4)}` 
+      : userId;
+    
+    onOpenChange(false);
+    navigate(`/profile/${formattedId}`);
+  };
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -39,10 +49,7 @@ const FollowersList: React.FC<FollowersListProps> = ({
                 <div 
                   key={follower.id} 
                   className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-lg cursor-pointer"
-                  onClick={() => {
-                    onOpenChange(false);
-                    navigate(`/profile/${follower.id}`);
-                  }}
+                  onClick={() => handleProfileClick(follower.id)}
                 >
                   <div className="flex items-center gap-3">
                     <Avatar>
