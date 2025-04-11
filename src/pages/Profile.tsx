@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -14,6 +13,7 @@ import { useProfileData } from '@/hooks/useProfileData';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const Profile = () => {
+  
   const { userId } = useParams<{ userId?: string }>();
   const navigate = useNavigate();
   const { user, profile: authProfile, refreshProfile } = useAuth();
@@ -46,6 +46,7 @@ const Profile = () => {
   };
   
   if (loading) {
+    
     return (
       <AppLayout activeTab="profile">
         <div className="flex items-center justify-center min-h-screen p-4">
@@ -71,6 +72,7 @@ const Profile = () => {
   const userName = profileData?.username || 'User';
 
   return (
+    
     <AppLayout activeTab="profile">
       <div className="flex flex-col min-h-screen pb-16">
         <ProfileHeader 
