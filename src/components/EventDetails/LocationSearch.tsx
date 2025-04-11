@@ -7,7 +7,7 @@ import LocationResultsList from './LocationResultsList';
 import GeolocationButton from './GeolocationButton';
 import { 
   LocationResult,
-  matchRealAddresses,
+  matchCitiesAndTowns,
   generateAddressSuggestions,
   createExactAddressOption
 } from './utils/locationUtils';
@@ -50,12 +50,12 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         // Create the "use exactly what I typed" option
         const exactAddressOption = createExactAddressOption(searchText);
         
-        // Match against real addresses first
-        const matchedAddresses = matchRealAddresses(query);
+        // Match against cities and towns first
+        const matchedCities = matchCitiesAndTowns(query);
         
         let results: LocationResult[];
-        if (matchedAddresses.length > 0) {
-          results = [exactAddressOption, ...matchedAddresses];
+        if (matchedCities.length > 0) {
+          results = [exactAddressOption, ...matchedCities];
         } else {
           results = [exactAddressOption, ...generateAddressSuggestions(query)];
         }
@@ -136,7 +136,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input 
           ref={inputRef}
-          placeholder="Enter any address worldwide" 
+          placeholder="Enter a city or town" 
           value={searchText} 
           className="pl-9 pr-10" 
           onChange={handleInputChange}
@@ -168,7 +168,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        Enter any address worldwide or use your current location
+        Enter a city or town, or use your current location
       </p>
     </div>
   );

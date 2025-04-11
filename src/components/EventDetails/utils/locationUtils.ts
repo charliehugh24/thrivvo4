@@ -1,4 +1,3 @@
-
 interface Address {
   streetNumber: string;
   street: string;
@@ -14,7 +13,26 @@ export interface LocationResult {
   placeId?: string;
 }
 
-// Sample address data
+// Sample cities and towns data
+export const cities = [
+  { city: 'West Chester', state: 'PA' },
+  { city: 'Philadelphia', state: 'PA' },
+  { city: 'New York', state: 'NY' },
+  { city: 'Boston', state: 'MA' },
+  { city: 'Chicago', state: 'IL' },
+  { city: 'San Francisco', state: 'CA' },
+  { city: 'Los Angeles', state: 'CA' },
+  { city: 'Miami', state: 'FL' },
+  { city: 'Seattle', state: 'WA' },
+  { city: 'Denver', state: 'CO' },
+  { city: 'Austin', state: 'TX' },
+  { city: 'Portland', state: 'OR' },
+  { city: 'Washington', state: 'DC' },
+  { city: 'Nashville', state: 'TN' },
+  { city: 'Atlanta', state: 'GA' }
+];
+
+// Sample address data - keeping for reference but not using for location suggestions
 export const realAddresses: Address[] = [
   {
     streetNumber: '1002',
@@ -67,60 +85,39 @@ export const realAddresses: Address[] = [
   }
 ];
 
-export const matchRealAddresses = (query: string): LocationResult[] => {
-  return realAddresses.filter((address) => {
-    const fullAddressLower = `${address.streetNumber} ${address.street} ${address.city} ${address.state} ${address.zip}`.toLowerCase();
-    const streetAddressLower = `${address.streetNumber} ${address.street}`.toLowerCase();
-    
-    if (query.includes('1002') && query.includes('farm') && query.includes('lane')) {
-      return true;
-    }
-    
-    const allPartsMatch = query.split(' ').every(part => fullAddressLower.includes(part));
-    const isStreetMatch = streetAddressLower.includes(query) || query.split(' ').every(part => streetAddressLower.includes(part));
-    
-    return allPartsMatch || isStreetMatch;
-  }).map((address, index) => ({
-    id: `real-${index}`,
-    name: `${address.streetNumber} ${address.street}`,
-    address: `${address.streetNumber} ${address.street}, ${address.city}, ${address.state} ${address.zip}`,
-    placeId: `place_real_${index}`
+export const matchCitiesAndTowns = (query: string): LocationResult[] => {
+  return cities.filter((location) => {
+    const locationString = `${location.city} ${location.state}`.toLowerCase();
+    return locationString.includes(query.toLowerCase());
+  }).map((location, index) => ({
+    id: `city-${index}`,
+    name: location.city,
+    address: `${location.city}, ${location.state}`,
+    placeId: `place_city_${index}`
   }));
+};
+
+export const matchRealAddresses = (query: string): LocationResult[] => {
+  return [];
 };
 
 export const generateAddressSuggestions = (query: string): LocationResult[] => {
   const results: LocationResult[] = [];
-  const streetTypes = ["Street", "Avenue", "Boulevard", "Road", "Drive"];
-  const cities = ["West Chester", "Philadelphia", "New York", "Boston", "Chicago"];
-  const states = ["PA", "NY", "MA", "IL"];
-
-  const queryParts = query.split(' ');
-  const possibleNumber = queryParts[0];
-  const hasNumber = /^\d+$/.test(possibleNumber);
   
-  for (let i = 0; i < 3; i++) {
-    const num = hasNumber ? possibleNumber : Math.floor(Math.random() * 1000) + 1;
-    
-    let street;
-    if (hasNumber && queryParts.length > 1) {
-      street = queryParts.slice(1).join(' ');
-      street = street.charAt(0).toUpperCase() + street.slice(1);
-    } else {
-      street = query.charAt(0).toUpperCase() + query.slice(1);
-    }
-    
-    const streetType = streetTypes[i % streetTypes.length];
-    const city = cities[i % cities.length];
-    const state = states[i % states.length];
-    const zip = Math.floor(Math.random() * 90000) + 10000;
-    
+  const towns = [
+    { city: `${query.charAt(0).toUpperCase() + query.slice(1)}ville`, state: 'PA' },
+    { city: `${query.charAt(0).toUpperCase() + query.slice(1)} Springs`, state: 'CO' },
+    { city: `${query.charAt(0).toUpperCase() + query.slice(1)}town`, state: 'NY' }
+  ];
+  
+  towns.forEach((town, i) => {
     results.push({
-      id: `mock-${i}`,
-      name: `${num} ${street} ${streetType}`,
-      address: `${num} ${street} ${streetType}, ${city}, ${state} ${zip}`,
-      placeId: `place_${i}`
+      id: `gen-town-${i}`,
+      name: town.city,
+      address: `${town.city}, ${town.state}`,
+      placeId: `place_gen_${i}`
     });
-  }
+  });
   
   return results;
 };

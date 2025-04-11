@@ -37,7 +37,7 @@ const LocationResultsList: React.FC<LocationResultsListProps> = ({
       {isSearching ? (
         <div className="p-4 text-center">
           <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">Searching locations worldwide...</p>
+          <p className="text-sm text-muted-foreground">Searching locations...</p>
         </div>
       ) : (
         <div className="max-h-[300px] overflow-y-auto">
@@ -50,7 +50,9 @@ const LocationResultsList: React.FC<LocationResultsListProps> = ({
               <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
               <div className="flex flex-col overflow-hidden">
                 <span className="font-medium truncate">{location.name}</span>
-                <span className="text-xs text-muted-foreground truncate">{location.address}</span>
+                {location.id !== 'custom' && (
+                  <span className="text-xs text-muted-foreground truncate">{location.address}</span>
+                )}
               </div>
             </div>
           ))}
