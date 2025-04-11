@@ -6,9 +6,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type ProfileData = Tables<'profiles'>;
 
@@ -46,6 +47,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   fetchFollowing
 }) => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const userName = profileData?.username || 'User';
   const userLocation = profileData?.location || 'Location not set';
@@ -152,46 +154,48 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   return (
     <div className="relative">
-      <div className="bg-gradient-to-r from-thrivvo-teal to-thrivvo-orange/70 h-40" />
+      <div className="bg-gradient-to-r from-thrivvo-teal to-thrivvo-orange/70 h-32 md:h-40" />
       
-      <div className="px-4 relative -mt-12 flex justify-between items-end">
-        <Avatar className="border-4 border-background h-24 w-24">
+      <div className={`px-3 md:px-4 relative ${isMobile ? '-mt-10' : '-mt-12'} flex justify-between items-end`}>
+        <Avatar className={`border-4 border-background ${isMobile ? 'h-20 w-20' : 'h-24 w-24'}`}>
           <AvatarImage src={userAvatar} />
           <AvatarFallback>{getInitial(userName)}</AvatarFallback>
         </Avatar>
         
         {isCurrentUser ? (
-          <div className="flex gap-2 mb-2">
+          <div className="flex gap-1 md:gap-2 mb-2 scale-90 md:scale-100 origin-bottom-right">
             <Button 
               variant="outline" 
               className="bg-white"
+              size={isMobile ? "sm" : "default"}
               onClick={onAccountSettings}
             >
-              <Settings className="h-4 w-4 mr-2" />
-              Account
+              <Settings className="h-4 w-4 mr-1 md:mr-2" />
+              <span className={isMobile ? "text-xs" : ""}>Account</span>
             </Button>
             <Button 
               variant="default" 
               className="bg-thrivvo-teal hover:bg-thrivvo-teal/90"
+              size={isMobile ? "sm" : "default"}
               onClick={onEditProfile}
             >
-              Edit Profile
+              <span className={isMobile ? "text-xs" : ""}>Edit Profile</span>
             </Button>
           </div>
         ) : null}
       </div>
       
-      <div className="px-4 py-2">
+      <div className="px-3 md:px-4 py-2">
         <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-xl font-bold">{userName}</h1>
+          <h1 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>{userName}</h1>
           {isVerified && (
             <Shield className="h-4 w-4 text-thrivvo-teal" />
           )}
         </div>
-        <p className="text-muted-foreground text-sm mb-2">{userLocation}</p>
-        <p className="text-sm mb-3">{userBio}</p>
+        <p className="text-muted-foreground text-xs md:text-sm mb-2">{userLocation}</p>
+        <p className="text-xs md:text-sm mb-3 line-clamp-3 md:line-clamp-none">{userBio}</p>
         
-        <div className="flex items-center gap-4 text-sm my-2">
+        <div className="flex items-center gap-4 text-xs md:text-sm my-2">
           <div 
             className="cursor-pointer hover:underline flex items-center" 
             onClick={onShowFollowers}
@@ -209,29 +213,30 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </div>
 
         {userInterests?.length > 0 && (
-          <div className="flex flex-wrap gap-1 my-3">
+          <div className="flex flex-wrap gap-1 my-2 md:my-3">
             {userInterests.map((interest: string, i: number) => (
-              <Badge key={i} variant="outline">{interest}</Badge>
+              <Badge key={i} variant="outline" className="text-xs py-0">{interest}</Badge>
             ))}
           </div>
         )}
         
         {!isCurrentUser && (
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-2 mt-2 md:mt-3">
             <Button 
               variant={isFollowing ? "outline" : "default"}
               className={isFollowing ? "bg-green-50 text-green-600 border-green-200" : "bg-thrivvo-teal hover:bg-thrivvo-teal/90"}
+              size={isMobile ? "sm" : "default"}
               onClick={handleFollow}
             >
               {isFollowing ? (
                 <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Following
+                  <Check className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                  <span className={isMobile ? "text-xs" : ""}>Following</span>
                 </>
               ) : (
                 <>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Follow
+                  <UserPlus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                  <span className={isMobile ? "text-xs" : ""}>Follow</span>
                 </>
               )}
             </Button>
@@ -239,15 +244,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <Button 
               variant="outline" 
               className="bg-white text-foreground border-input"
+              size={isMobile ? "sm" : "default"}
               onClick={handleSendMessage}
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Message
+              <MessageCircle className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className={isMobile ? "text-xs" : ""}>Message</span>
             </Button>
           </div>
         )}
         
-        <Separator className="my-4" />
+        <Separator className="my-3 md:my-4" />
       </div>
     </div>
   );
