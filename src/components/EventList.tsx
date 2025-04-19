@@ -1,13 +1,14 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, CheckCircle, DollarSign, Share2, X } from 'lucide-react';
+import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, CheckCircle, DollarSign, Share2, X, Trash2 } from 'lucide-react';
 import { Event } from '@/types';
 import { formatDistanceToNow, isValid } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -22,17 +23,22 @@ interface EventListProps {
   emptyMessage?: string;
   showCancelOption?: boolean;
   onCancelEvent?: (eventId: string) => void;
+  onDeleteEvent?: (eventId: string) => void;
 }
 
 const EventList: React.FC<EventListProps> = ({ 
   events, 
   emptyMessage = "No events found",
   showCancelOption = false,
-  onCancelEvent
+  onCancelEvent,
+  onDeleteEvent
 }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
   const [eventToCancel, setEventToCancel] = React.useState<Event | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [eventToDelete, setEventToDelete] = React.useState<Event | null>(null);
 
   if (events.length === 0) {
     return (
@@ -101,16 +107,109 @@ const EventList: React.FC<EventListProps> = ({
     setCancelDialogOpen(true);
   };
 
-  const confirmCancel = () => {
-    if (eventToCancel && onCancelEvent) {
-      onCancelEvent(eventToCancel.id);
+  const confirmCancel = async () => {
+    if (!eventToCancel || !user) return;
+
+    try {
+      // Get current event data
+      const { data: currentEvent, error: fetchError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventToCancel.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Remove user from attendees
+      const updatedIds = currentEvent.attendees.ids.filter((id: string) => id !== user.id);
+      const updatedCount = currentEvent.attendees.count - 1;
+
+      const { error: updateError } = await supabase
+        .from('events')
+        .update({
+          attendees: {
+            ...currentEvent.attendees,
+            ids: updatedIds,
+            count: updatedCount
+          }
+        })
+        .eq('id', eventToCancel.id);
+
+      if (updateError) throw updateError;
+
       toast({
-        title: "Event cancelled",
-        description: `You have cancelled "${eventToCancel.title}"`,
+        title: "Attendance cancelled",
+        description: `You are no longer attending "${eventToCancel.title}"`,
       });
+
+      if (onCancelEvent) {
+        onCancelEvent(eventToCancel.id);
+      }
+    } catch (error) {
+      console.error('Error cancelling attendance:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel attendance. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setCancelDialogOpen(false);
+      setEventToCancel(null);
     }
-    setCancelDialogOpen(false);
-    setEventToCancel(null);
+  };
+
+  const handleDeleteClick = async (event: Event, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEventToDelete(event);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!eventToDelete || !user) return;
+
+    try {
+      console.log('Attempting to delete event:', {
+        eventId: eventToDelete.id,
+        userId: user.id,
+        hostId: eventToDelete.host.id
+      });
+
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventToDelete.id)
+        .eq('host->>id', user.id);
+
+      if (error) {
+        console.error('Delete error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+
+      toast({
+        title: "Event deleted",
+        description: `You have deleted "${eventToDelete.title}"`,
+      });
+
+      if (onDeleteEvent) {
+        onDeleteEvent(eventToDelete.id);
+      }
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete event. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setEventToDelete(null);
+    }
   };
 
   return (
@@ -187,7 +286,7 @@ const EventList: React.FC<EventListProps> = ({
             </div>
           </Link>
           <div className="absolute top-2 right-2 flex space-x-1">
-            {showCancelOption && (
+            {user && event.attendees.ids.includes(user.id) && event.host.id !== user.id && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -195,6 +294,16 @@ const EventList: React.FC<EventListProps> = ({
                 onClick={(e) => handleCancelClick(event, e)}
               >
                 <X size={14} />
+              </Button>
+            )}
+            {user && event.host.id === user.id && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-full bg-background/80 hover:bg-destructive hover:text-white shadow-sm"
+                onClick={(e) => handleDeleteClick(event, e)}
+              >
+                <Trash2 size={14} />
               </Button>
             )}
             <Button
@@ -209,21 +318,41 @@ const EventList: React.FC<EventListProps> = ({
         </div>
       ))}
 
-      {/* Confirmation Dialog */}
+      {/* Cancel Attendance Dialog */}
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel Event</DialogTitle>
+            <DialogTitle>Cancel Attendance</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel {eventToCancel?.title}? This action cannot be undone.
+              Are you sure you want to cancel your attendance to {eventToCancel?.title}?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
-              Keep Event
+              Keep Attending
             </Button>
             <Button variant="destructive" onClick={confirmCancel}>
-              Cancel Event
+              Cancel Attendance
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Event Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Event</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {eventToDelete?.title}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Keep Event
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete Event
             </Button>
           </DialogFooter>
         </DialogContent>

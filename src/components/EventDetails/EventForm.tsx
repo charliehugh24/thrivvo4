@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,6 +18,7 @@ import {
 import { Calendar } from 'lucide-react';
 import LocationSearch from './LocationSearch';
 import { useToast } from '@/hooks/use-toast';
+import { eventCategories } from '@/data/eventCategories';
 
 interface EventData {
   type: string;
@@ -99,6 +99,28 @@ const EventForm: React.FC<EventFormProps> = ({ eventData, onDataChange, onBack, 
           value={eventData.description}
           onChange={(e) => onDataChange('description', e.target.value)}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="partyType">What type of party?</Label>
+        <Select 
+          value={eventData.type || ''}
+          onValueChange={(value) => onDataChange('type', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select party type" />
+          </SelectTrigger>
+          <SelectContent>
+            {eventCategories.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                <div className="flex items-center gap-2">
+                  <span>{category.icon}</span>
+                  <span>{category.name}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <LocationSearch 

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,8 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import PartyEvents from "./pages/PartyEvents";
-import HouseParties from "./pages/HouseParties";
 import EventDetail from "./pages/EventDetail";
+import EditEvent from "./pages/EditEvent";
 import Search from "./pages/Search";
 import AddEvent from "./pages/AddEvent";
 import EventNameStep from "./pages/EventNameStep";
@@ -23,6 +22,7 @@ import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
 import ForgotPassword from "./pages/ForgotPassword";
 import { useAuth } from "./contexts/AuthContext";
+import EventTypePage from './pages/EventTypePage';
 
 const queryClient = new QueryClient();
 
@@ -51,8 +51,8 @@ const AppRoutes = () => {
       {/* Protected routes */}
       <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/party-events" element={<ProtectedRoute><PartyEvents /></ProtectedRoute>} />
-      <Route path="/house-parties" element={<ProtectedRoute><HouseParties /></ProtectedRoute>} />
       <Route path="/event/:eventId" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
+      <Route path="/edit-event/:eventId" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
       <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
       <Route path="/add-event" element={<ProtectedRoute><AddEvent /></ProtectedRoute>} />
       <Route path="/add-event/name" element={<ProtectedRoute><EventNameStep /></ProtectedRoute>} />
@@ -64,6 +64,7 @@ const AppRoutes = () => {
       <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
       <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
+      <Route path="/event-type" element={<EventTypePage />} />
       
       {/* Catch-all route */}
       <Route path="*" element={<NotFound />} />

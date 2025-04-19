@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -32,11 +31,7 @@ const AccountSettingsDialog: React.FC<AccountSettingsDialogProps> = ({ open, onO
     emailNotifications: true
   });
   
-  const recentContacts = [
-    { id: 'user-1', name: 'Alex Johnson', lastContact: '2 days ago' },
-    { id: 'user-2', name: 'Sam Taylor', lastContact: '1 week ago' },
-    { id: 'user-3', name: 'Jordan Smith', lastContact: '2 weeks ago' }
-  ];
+  const recentContacts: { id: string; name: string; lastContact: string }[] = [];
   
   const currentSubscription = {
     plan: 'Thrivvo+ Basic',
@@ -258,37 +253,34 @@ const AccountSettingsDialog: React.FC<AccountSettingsDialogProps> = ({ open, onO
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Recent Contacts</h3>
                 
-                <div className="space-y-2">
-                  {recentContacts.map(contact => (
-                    <div 
-                      key={contact.id}
-                      className="flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer"
-                      onClick={() => handleContactClick(contact.id)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Users className="h-4 w-4 text-primary" />
+                {recentContacts.length > 0 ? (
+                  <div className="space-y-2">
+                    {recentContacts.map(contact => (
+                      <div 
+                        key={contact.id}
+                        className="flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer"
+                        onClick={() => handleContactClick(contact.id)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Users className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{contact.name}</p>
+                            <p className="text-xs text-muted-foreground">Last contacted {contact.lastContact}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">{contact.name}</p>
-                          <p className="text-xs text-muted-foreground">Last contacted {contact.lastContact}</p>
-                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  ))}
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full text-sm"
-                  onClick={() => {
-                    onOpenChange(false);
-                    navigate('/');
-                  }}
-                >
-                  View All Contacts
-                </Button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Users className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">No contacts yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Start connecting with other users to build your network</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
             

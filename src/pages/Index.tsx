@@ -4,8 +4,6 @@ import AppLayout from '@/components/AppLayout';
 import EventCard from '@/components/EventCard';
 import EventList from '@/components/EventList';
 import CategoryFilter from '@/components/CategoryFilter';
-import UsersNearby from '@/components/UsersNearby';
-import { mockEvents, mockUsers } from '@/data/mockData';
 import { Event, EventCategory } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { LayoutList, LayoutGrid, CheckCircle, DollarSign } from 'lucide-react';
@@ -14,10 +12,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const Index = () => {
   const navigate = useNavigate();
-  const [events, setEvents] = useState<Event[]>(mockEvents);
+  const [events, setEvents] = useState<Event[]>([]);
   const [mainEvent, setMainEvent] = useState<Event | null>(null);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>(null);
@@ -48,42 +47,78 @@ const Index = () => {
   }, []);
   
   useEffect(() => {
-    let filteredEvents = [...mockEvents];
-    
-    if (selectedCategory) {
-      filteredEvents = filteredEvents.filter(event => event.category === selectedCategory);
-    }
-    
-    if (userProfile?.interests && userProfile.interests.length > 0 && !selectedCategory) {
-      filteredEvents = filteredEvents.filter(event => 
-        userProfile.interests?.includes(event.category) || 
-        event.vibe.some(v => userProfile.interests?.includes(v))
-      );
-    }
-    
-    if (userProfile?.distance_preference) {
-      filteredEvents = filteredEvents.filter(event => 
-        event.location.distance <= userProfile.distance_preference
-      );
-    }
-    
-    if (filteredEvents.length > 0) {
-      setMainEvent(filteredEvents[0]);
-      setEvents(filteredEvents.slice(1));
-    } else {
-      setMainEvent(null);
-      setEvents([]);
-    }
-    
-    setCurrentEventIndex(0);
-  }, [selectedCategory, userProfile]);
+    const fetchEvents = async () => {
+      setLoading(true);
+      try {
+        console.log('Fetching events...');
+        let query = supabase
+          .from('events')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (selectedCategory) {
+          console.log('Filtering by category:', selectedCategory);
+          query = query.eq('category', selectedCategory);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
+
+        console.log('Received data:', data);
+
+        if (data && data.length > 0) {
+          // Convert Supabase data to Event type
+          const convertedEvents = data.map(event => ({
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            category: event.category as EventCategory,
+            location: event.location as Event['location'],
+            time: event.time as Event['time'],
+            host: event.host as Event['host'],
+            attendees: event.attendees as Event['attendees'],
+            price: event.price as Event['price'],
+            images: event.images,
+            vibe: event.vibe,
+            isPrivate: event.isPrivate,
+            isVerified: event.isVerified || false,
+            monetized: event.monetized || false
+          }));
+
+          // Sort events by date
+          const sortedEvents = convertedEvents.sort((a, b) => 
+            new Date(b.time.start).getTime() - new Date(a.time.start).getTime()
+          );
+
+          console.log('Converted events:', sortedEvents);
+          setMainEvent(sortedEvents[0]);
+          setEvents(sortedEvents.slice(1));
+        } else {
+          console.log('No events found');
+          setMainEvent(null);
+          setEvents([]);
+        }
+      } catch (error) {
+        console.error('Error in fetchEvents:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load events. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [selectedCategory]);
 
   const handleCategorySelect = (category: EventCategory | null) => {
-    if (category === 'party') {
-      navigate('/house-parties');
-    } else {
-      setSelectedCategory(category);
-    }
+    setSelectedCategory(category);
   };
 
   const handleSwipeLeft = () => {
@@ -122,6 +157,28 @@ const Index = () => {
   return (
     <AppLayout activeTab="discover" onTabChange={handleTabChange}>
       <div className="p-4 space-y-6">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">
+            {selectedCategory ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Events` : 'Discover Events'}
+          </h1>
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="icon"
+              onClick={() => setViewMode('list')}
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'card' ? 'default' : 'outline'}
+              size="icon"
+              onClick={() => setViewMode('card')}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
         <CategoryFilter 
           selectedCategory={selectedCategory} 
           onSelectCategory={handleCategorySelect}
@@ -129,7 +186,23 @@ const Index = () => {
         
         {loading && (
           <div className="text-center py-4">
-            <p>Loading your personalized events...</p>
+            <p>Loading events...</p>
+          </div>
+        )}
+        
+        {!loading && !mainEvent && events.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              {selectedCategory 
+                ? `No ${selectedCategory} events found. Be the first to create one!` 
+                : 'No events found. Create an event to get started!'}
+            </p>
+            <Button 
+              className="mt-4 bg-thrivvo-teal text-white"
+              onClick={() => navigate('/add-event')}
+            >
+              Create Event
+            </Button>
           </div>
         )}
         
@@ -139,7 +212,7 @@ const Index = () => {
             <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
               <div className="relative w-full h-48">
                 <img 
-                  src={mainEvent.images[0]} 
+                  src={mainEvent.images[0] || '/placeholder-event.jpg'} 
                   alt={mainEvent.title} 
                   className="w-full h-full object-cover"
                 />
@@ -181,7 +254,9 @@ const Index = () => {
                 <div className="flex items-center mt-3 text-sm text-muted-foreground">
                   <span>{new Date(mainEvent.time.start).toLocaleDateString('en-US', { 
                     month: 'short', 
-                    day: 'numeric' 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric'
                   })}</span>
                   <span className="mx-2">•</span>
                   <span>{mainEvent.location.name}</span>
@@ -199,77 +274,25 @@ const Index = () => {
           </div>
         )}
         
-        <div>
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-semibold">
-              {!loading && userProfile?.interests && userProfile.interests.length > 0 && !selectedCategory 
-                ? 'Events Based on Your Interests' 
-                : 'More Events'}
-            </h2>
-            <div className="flex border rounded-md overflow-hidden">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={viewMode === 'card' ? 'bg-muted' : ''}
-                onClick={() => setViewMode('card')}
-              >
-                <LayoutGrid size={18} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={viewMode === 'list' ? 'bg-muted' : ''}
-                onClick={() => setViewMode('list')}
-              >
-                <LayoutList size={18} />
-              </Button>
-            </div>
-          </div>
-          
-          <div className="min-h-[200px]">
-            {events.length > 0 ? (
-              <>
-                {viewMode === 'card' ? (
-                  <div className="w-full mb-8">
-                    {events[currentEventIndex] && (
-                      <EventCard 
-                        event={events[currentEventIndex]} 
-                        onSwipeLeft={handleSwipeLeft} 
-                        onSwipeRight={handleSwipeRight} 
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div className="w-full">
-                    <EventList events={events} />
-                  </div>
-                )}
-                
-                {viewMode === 'card' && !hasMoreEvents && currentEventIndex === events.length - 1 && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Last event in this category. Swipe to see a summary.
-                  </p>
-                )}
-              </>
+        {!loading && events.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">More Events</h2>
+            {viewMode === 'list' ? (
+              <EventList events={events} />
             ) : (
-              <div className="text-center p-8">
-                <h3 className="text-lg font-medium">
-                  {!loading && userProfile?.distance_preference 
-                    ? `No events found within ${userProfile.distance_preference} miles`
-                    : 'No events found'}
-                </h3>
-                <p className="text-muted-foreground">
-                  Try selecting a different category, increasing your distance preference, or check back later
-                </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {events.map(event => (
+                  <EventCard 
+                    key={event.id} 
+                    event={event}
+                    onSwipeLeft={() => {}}
+                    onSwipeRight={() => {}}
+                  />
+                ))}
               </div>
             )}
           </div>
-        </div>
-        
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3">Connect with Others</h2>
-          <UsersNearby users={mockUsers} />
-        </div>
+        )}
       </div>
     </AppLayout>
   );

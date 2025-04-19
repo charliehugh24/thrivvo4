@@ -1,4 +1,3 @@
-
 import React, { ReactNode } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SearchIcon, BellIcon, UserIcon, PlusIcon, CrownIcon } from 'lucide-react';

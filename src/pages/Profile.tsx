@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockEvents } from '@/data/mockData';
 import ProfileHeader from '@/components/ProfileHeader';
 import ProfileTabs from '@/components/ProfileTabs';
 import FollowersList from '@/components/FollowersList';
@@ -95,7 +94,6 @@ const Profile = () => {
         <ProfileTabs 
           userName={userName}
           isCurrentUser={isCurrentUser}
-          mockEvents={mockEvents}
         />
       </div>
       

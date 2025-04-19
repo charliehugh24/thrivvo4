@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
@@ -7,9 +6,12 @@ import { ArrowLeft, Calendar, MapPin, DollarSign, Ticket } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Event } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const EventReviewStep = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [eventData, setEventData] = useState({
     type: '',
     name: '',
@@ -56,64 +58,143 @@ const EventReviewStep = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to create an event.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmitting(true);
-    
-    // Create an event object with the correct structure based on Event type
-    const newEvent: Event = {
-      id: `user-event-${Date.now()}`,
-      title: eventData.name,
-      description: eventData.description,
-      category: eventData.type as any || 'other',
-      location: {
-        name: eventData.location,
-        address: eventData.location,
-        distance: 0
-      },
-      time: {
-        start: eventData.date
-      },
-      host: {
-        id: "user-1", // Current user ID
-        name: "Alex Johnson", // Current user name
-        verified: false,
-        avatar: "/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png" // Current user avatar
-      },
-      attendees: {
-        count: 1,
-        max: eventData.ticketLimit ? parseInt(eventData.ticketLimit) : undefined
-      },
-      price: eventData.isPaid && eventData.price ? {
-        amount: parseFloat(eventData.price),
-        currency: "USD"
-      } : undefined,
-      images: eventData.images || [], // Ensure images is an array even if undefined
-      vibe: [],
-      isPrivate: false,
-      monetized: eventData.isPaid || false // Add monetized flag based on isPaid
-    };
-    
-    // Save to localStorage (get existing events first)
-    const existingEvents = localStorage.getItem('userCreatedEvents');
-    const userEvents = existingEvents ? JSON.parse(existingEvents) : [];
-    userEvents.push(newEvent);
-    localStorage.setItem('userCreatedEvents', JSON.stringify(userEvents));
-    
-    // Simulate API call with a timeout
-    setTimeout(() => {
+
+    try {
+      // First, check if the user has a profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is "not found"
+        console.error('Error checking profile:', profileError);
+        throw profileError;
+      }
+
+      // If no profile exists, create one
+      if (!profile) {
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name || 'Anonymous',
+            avatar_url: user.user_metadata?.avatar_url || null,
+            updated_at: new Date().toISOString()
+          });
+
+        if (createProfileError) {
+          console.error('Error creating profile:', createProfileError);
+          throw createProfileError;
+        }
+      }
+
+      // Create an event object with the correct structure for Supabase
+      const newEvent = {
+        title: eventData.name || 'Untitled Event',
+        description: eventData.description || 'No description provided',
+        category: eventData.type || 'other',
+        location: {
+          name: eventData.location || 'Location not specified',
+          address: eventData.location || 'Address not specified',
+          distance: 0
+        },
+        time: {
+          start: eventData.date || new Date().toISOString(),
+          end: null
+        },
+        host: {
+          id: user.id,
+          name: user.user_metadata?.full_name || 'Anonymous',
+          verified: false,
+          avatar: user.user_metadata?.avatar_url || null
+        },
+        attendees: {
+          count: 0,
+          max: eventData.ticketLimit ? parseInt(eventData.ticketLimit) : null,
+          ids: []
+        },
+        price: eventData.isPaid && eventData.price ? {
+          amount: parseFloat(eventData.price),
+          currency: "USD"
+        } : null,
+        images: eventData.images || [],
+        vibe: [],
+        monetized: eventData.isPaid || false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log('Creating event with data:', JSON.stringify(newEvent, null, 2));
+      
+      // Save to Supabase with proper error handling
+      const { data, error } = await supabase
+        .from('events')
+        .insert(newEvent)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Supabase error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error('No data returned from event creation');
+      }
+      
+      console.log('Event created successfully:', data);
+      
+      // Verify the event was created by fetching it
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', data.id)
+        .single();
+      
+      if (verifyError) {
+        console.error('Error verifying event creation:', verifyError);
+      } else {
+        console.log('Verified event data:', verifyData);
+      }
+      
       // Clear the form data from session storage
       sessionStorage.removeItem('newEventData');
       
+      // Show success message
       toast({
-        title: "Event created successfully!",
-        description: "Your event has been submitted and is now live.",
+        title: "Event Created",
+        description: "Your event has been created successfully!",
       });
       
+      // Navigate to the profile page instead of the event page
+      navigate('/profile');
+    } catch (error) {
+      console.error('Error creating event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create event. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
       setSubmitting(false);
-      
-      // Navigate back to home
-      navigate('/');
-    }, 1500);
+    }
   };
 
   return (

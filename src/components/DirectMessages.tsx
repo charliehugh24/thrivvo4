@@ -1,588 +1,280 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, Send, X } from 'lucide-react';
+import { MessageSquare, Send, Loader2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { User } from '@/types';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSupabase } from '@/hooks/useSupabase';
+import { useToast } from '@/hooks/useToast';
 
-// Mock messages data
-const mockConversations = [
-  {
-    id: '1',
-    user: {
-      id: 'u1',
-      name: 'Sarah Kim',
-      avatar: 'https://i.pravatar.cc/150?img=1',
-    },
-    lastMessage: 'Hey, are you going to the party tonight?',
-    timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-    unread: true,
-  },
-  {
-    id: '2',
-    user: {
-      id: 'u2',
-      name: 'Alex Johnson',
-      avatar: 'https://i.pravatar.cc/150?img=2',
-    },
-    lastMessage: 'I just joined the app, what events do you recommend?',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
-    unread: false,
-  },
-  {
-    id: '3',
-    user: {
-      id: 'u3',
-      name: 'Jamie Lee',
-      avatar: 'https://i.pravatar.cc/150?img=3',
-    },
-    lastMessage: 'Thanks for the invite!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
-    unread: false,
-  },
-  {
-    id: '4',
-    user: {
-      id: 'user-2',
-      name: 'Sam Rivera',
-      avatar: 'https://randomuser.me/api/portraits/women/79.jpg',
-    },
-    lastMessage: 'Hello, I wanted to connect with you!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 10), // 10 minutes ago
-    unread: true,
-  },
-];
-
-// Map for mock profile IDs to conversation IDs
-const mockUserIdToConvId: Record<string, string> = {
-  'user-1': '2', // Alex Johnson
-  'user-2': '4', // Sam Rivera
-  'user-3': '5', // Taylor Morgan - will create dynamically
-  'user-4': '6', // Jordan Kim - will create dynamically
-  'user-5': '7', // Casey Lopez - will create dynamically
-};
-
-interface ChatMessage {
+interface Message {
   id: string;
-  sender: 'me' | 'other';
   text: string;
-  timestamp: Date;
+  sender_id: string;
+  created_at: string;
 }
 
-// Mock chat history for a conversation
-const mockChatHistory: Record<string, ChatMessage[]> = {
-  '1': [
-    {
-      id: 'm1',
-      sender: 'other',
-      text: 'Hey! Are you free tonight?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    },
-    {
-      id: 'm2',
-      sender: 'me',
-      text: 'Maybe, what\'s going on?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 25),
-    },
-    {
-      id: 'm3',
-      sender: 'other',
-      text: 'There\'s a house party near campus!',
-      timestamp: new Date(Date.now() - 1000 * 60 * 20),
-    },
-    {
-      id: 'm4',
-      sender: 'other',
-      text: 'A bunch of people from our community are going',
-      timestamp: new Date(Date.now() - 1000 * 60 * 19),
-    },
-    {
-      id: 'm5',
-      sender: 'me',
-      text: 'Sounds fun! What time?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 10),
-    },
-    {
-      id: 'm6',
-      sender: 'other',
-      text: 'Starts at 9pm. I can send you the address.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 8),
-    },
-    {
-      id: 'm7',
-      sender: 'other',
-      text: 'Hey, are you going to the party tonight?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    },
-  ],
-  '2': [
-    {
-      id: 'm1',
-      sender: 'other',
-      text: 'Hi there! I just joined Thrivvo!',
-      timestamp: new Date(Date.now() - 1000 * 60 * 90),
-    },
-    {
-      id: 'm2',
-      sender: 'me',
-      text: 'Welcome! How are you liking it so far?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 85),
-    },
-    {
-      id: 'm3',
-      sender: 'other',
-      text: 'It\'s great! I\'m looking for events to attend this weekend',
-      timestamp: new Date(Date.now() - 1000 * 60 * 80),
-    },
-    {
-      id: 'm4',
-      sender: 'me',
-      text: 'There are some great house parties and a concert happening',
-      timestamp: new Date(Date.now() - 1000 * 60 * 75),
-    },
-    {
-      id: 'm5',
-      sender: 'other',
-      text: 'I just joined the app, what events do you recommend?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60),
-    },
-  ],
-  '3': [
-    {
-      id: 'm1',
-      sender: 'me',
-      text: 'Hi Jamie! I\'m hosting a small gathering next Friday, would you like to join?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    },
-    {
-      id: 'm2',
-      sender: 'other',
-      text: 'Hey! That sounds fun! What time?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 23),
-    },
-    {
-      id: 'm3',
-      sender: 'me',
-      text: 'Around 7pm. I\'ll send you the details closer to the date.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 22),
-    },
-    {
-      id: 'm4',
-      sender: 'other',
-      text: 'Thanks for the invite!',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    },
-  ],
-  '4': [
-    {
-      id: 'm1',
-      sender: 'me',
-      text: 'Hello, I wanted to connect with you!',
-      timestamp: new Date(Date.now() - 1000 * 60 * 10),
-    }
-  ],
-};
-
-// Mock user data for additional conversations
-const mockUserProfiles = {
-  'user-1': {
-    name: 'Alex Johnson',
-    avatar: '/lovable-uploads/d7368d4b-69d9-45f2-af66-f97850473f89.png',
-  },
-  'user-2': {
-    name: 'Sam Rivera',
-    avatar: 'https://randomuser.me/api/portraits/women/79.jpg',
-  },
-  'user-3': {
-    name: 'Taylor Morgan',
-    avatar: '/lovable-uploads/de943395-a2a4-4ee9-bed4-16cc40cfdc47.png',
-  },
-  'user-4': {
-    name: 'Jordan Kim',
-    avatar: null,
-  },
-  'user-5': {
-    name: 'Casey Lopez',
-    avatar: '/lovable-uploads/d6f2d298-cff6-47aa-9362-b19aae49b23e.png',
-  },
-};
-
-interface DirectMessagesProps {
-  initialConversationId?: string;
+interface Conversation {
+  id: string;
+  user1_id: string;
+  user2_id: string;
+  last_message: string | null;
+  unread: boolean;
+  profiles: {
+    username: string;
+    avatar_url: string;
+  };
 }
 
-const formatTime = (date: Date) => {
-  return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
-
-const DirectMessages: React.FC<DirectMessagesProps> = ({ initialConversationId }) => {
+const DirectMessages: React.FC = () => {
+  const { supabase } = useSupabase();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
-  
-  // Load initial state from localStorage or use mock data
-  const savedData = loadMessagesFromLocalStorage();
-  const [conversations, setConversations] = useState(savedData?.conversations || mockConversations);
-  const [chatHistory, setChatHistory] = useState<Record<string, ChatMessage[]>>(
-    savedData?.chatHistory || mockChatHistory
-  );
-  
-  // Filter conversations to only show those with messages
-  const activeConversations = conversations.filter(conv => 
-    chatHistory[conv.id] && chatHistory[conv.id].length > 0
-  );
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [chatHistory, setChatHistory] = useState<Record<string, Message[]>>({});
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Save state to localStorage whenever it changes
   useEffect(() => {
-    saveMessagesToLocalStorage(conversations, chatHistory);
-  }, [conversations, chatHistory]);
+    if (user) {
+      fetchConversations();
+    }
+  }, [user]);
   
-  // Check URL for message query parameter
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const messageUserId = params.get('message');
-    
-    if (messageUserId) {
-      // Open the messages dialog
-      setIsOpen(true);
-      
-      // Find or create conversation for this user
-      const convId = findOrCreateConversation(messageUserId);
-      if (convId) {
-        handleOpenConversation(convId);
-        
-        // Check if there's a message text in the URL
-        const messageText = params.get('text');
-        if (messageText && convId) {
-          // Send the message automatically
-          sendMessage(convId, messageText);
-        }
-      }
-      
-      // Remove the query param
-      navigate(location.pathname, { replace: true });
+    if (activeConversation) {
+      fetchMessages(activeConversation);
     }
-  }, [location]);
+  }, [activeConversation]);
   
-  // Handle initial conversation if passed as prop
-  useEffect(() => {
-    if (initialConversationId) {
-      setIsOpen(true);
-      handleOpenConversation(initialConversationId);
-    }
-  }, [initialConversationId]);
-  
-  const findOrCreateConversation = (userId: string): string | null => {
-    // Check if we already have a conversation mapped for this user
-    if (mockUserIdToConvId[userId]) {
-      return mockUserIdToConvId[userId];
-    }
+  const fetchConversations = async () => {
+    if (!user?.id) return;
     
-    // If not, check if user profile exists
-    const userProfile = mockUserProfiles[userId as keyof typeof mockUserProfiles];
-    if (!userProfile) return null;
-    
-    // Create a new conversation
-    const newConvId = `conv-${Date.now()}`;
-    
-    // Create new conversation entry
-    const newConversation = {
-      id: newConvId,
-      user: {
-        id: userId,
-        name: userProfile.name,
-        avatar: userProfile.avatar || '',
-      },
-      lastMessage: "Start a conversation...",
-      timestamp: new Date(),
-      unread: false,
-    };
-    
-    // Add to conversations list
-    setConversations(prev => [newConversation, ...prev]);
-    
-    // Add empty chat history
-    setChatHistory(prev => ({
-      ...prev,
-      [newConvId]: []
-    }));
-    
-    // Map user ID to conversation ID
-    mockUserIdToConvId[userId] = newConvId;
-    
-    return newConvId;
-  };
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+        .order('updated_at', { ascending: false });
 
-  // New separate function to send a message that can be called from outside the component
-  const sendMessage = (conversationId: string, text: string) => {
-    if (!text.trim()) return;
+      if (error) throw error;
 
-    const newMessage: ChatMessage = {
-      id: `m${Date.now()}`,
-      sender: 'me',
-      text: text,
-      timestamp: new Date(),
-    };
+      // Fetch profile information for each conversation
+      const conversationsWithProfiles = await Promise.all(
+        data.map(async (conv) => {
+          const otherUserId = conv.user1_id === user.id ? conv.user2_id : conv.user1_id;
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', otherUserId)
+            .single();
 
-    // Update chat history
-    setChatHistory(prev => ({
-      ...prev,
-      [conversationId]: [...(prev[conversationId] || []), newMessage]
-    }));
-
-    // Update conversation preview
-    setConversations(prev => prev.map(conv => {
-      if (conv.id === conversationId) {
-        return {
-          ...conv,
-          lastMessage: text,
-          timestamp: new Date(),
-          unread: false,
-        };
-      }
-      return conv;
-    }));
-
-    // Simulate receiving a reply after a short delay
-    setTimeout(() => {
-      const replyMessages = [
-        "Cool! I'll see you there!",
-        "That sounds great!",
-        "Thanks for letting me know!",
-        "Perfect! Looking forward to it.",
-        "Awesome! I'll be there.",
-      ];
-      
-      const randomReply = replyMessages[Math.floor(Math.random() * replyMessages.length)];
-      
-      const replyMessage: ChatMessage = {
-        id: `m${Date.now()}`,
-        sender: 'other',
-        text: randomReply,
-        timestamp: new Date(),
-      };
-      
-      setChatHistory(prev => ({
-        ...prev,
-        [conversationId]: [...(prev[conversationId] || []), replyMessage]
-      }));
-      
-      // Update conversation preview with reply
-      setConversations(prev => prev.map(conv => {
-        if (conv.id === conversationId) {
           return {
             ...conv,
-            lastMessage: randomReply,
-            timestamp: new Date(),
-            unread: activeConversation !== conversationId, // Mark as unread if not currently viewing
+            profiles: profile || { username: 'Unknown', avatar_url: null }
           };
-        }
-        return conv;
-      }));
-    }, 2000);
-  };
+        })
+      );
 
-  const handleSendMessage = (conversationId: string) => {
-    if (messageText.trim()) {
-      sendMessage(conversationId, messageText);
-      setMessageText('');
+      setConversations(conversationsWithProfiles);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load conversations. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
   };
+  
+  const fetchMessages = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
 
-  const handleOpenConversation = (conversationId: string) => {
-    setActiveConversation(conversationId);
-    
-    // Mark conversation as read
-    setConversations(prev => prev.map(conv => {
-      if (conv.id === conversationId) {
-        return { ...conv, unread: false };
-      }
-      return conv;
-    }));
+      if (error) throw error;
+      setChatHistory(prev => ({
+        ...prev,
+        [conversationId]: data,
+      }));
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load messages. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
+  
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageText.trim() || !user) return;
 
-  const handleNewMessage = (user: User) => {
-    toast({
-      title: "Message sent!",
-      description: `Your message to ${user.name} has been sent.`,
-    });
-    setIsOpen(false);
+    setSending(true);
+    try {
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: activeConversation,
+          sender_id: user.id,
+          text: messageText,
+        });
+
+      if (messageError) throw messageError;
+
+      // Update conversation's last message and timestamp
+      const { error: conversationError } = await supabase
+        .from('conversations')
+        .update({
+          last_message: messageText,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', activeConversation);
+
+      if (conversationError) throw conversationError;
+
+      setMessageText('');
+      fetchMessages(activeConversation);
+      fetchConversations(); // Refresh conversation list to update last message
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send message. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSending(false);
+    }
   };
-
-  // Calculate unread count only for active conversations
-  const unreadCount = activeConversations.filter(c => c.unread).length;
-
+  
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="h-8 w-8 bg-muted/50"
-        >
-          <MessageSquare size={16} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-thrivvo-orange text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-              {unreadCount}
-            </span>
+        <Button variant="ghost" size="icon" className="relative">
+          <MessageSquare size={20} />
+          {conversations.some(conv => conv.unread) && (
+            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
           )}
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-md p-0 h-[500px] flex flex-col">
-        <DialogHeader className="px-4 py-2 border-b">
-          <DialogTitle>
-            {activeConversation ? (
-              <div className="flex items-center">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setActiveConversation(null)}
-                  className="mr-2 h-8 w-8"
-                >
-                  <X size={16} />
-                </Button>
-                {conversations.find(c => c.id === activeConversation)?.user.name || 'Messages'}
-              </div>
-            ) : (
-              'Messages'
-            )}
-          </DialogTitle>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Messages</DialogTitle>
+          <DialogDescription>
+            Chat with your contacts and event attendees
+          </DialogDescription>
         </DialogHeader>
         
-        {!activeConversation ? (
-          <ScrollArea className="flex-1">
-            <div className="p-2 space-y-2">
-              {activeConversations.length > 0 ? (
-                activeConversations.map((conversation) => (
-                  <div 
-                    key={conversation.id}
-                    onClick={() => handleOpenConversation(conversation.id)}
-                    className={`flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-muted/50 ${conversation.unread ? 'bg-muted/30' : ''}`}
-                  >
-                    <Avatar className="h-10 w-10 flex-shrink-0">
-                      <AvatarImage src={conversation.user.avatar} />
-                      <AvatarFallback>{conversation.user.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center">
-                        <p className={`font-medium truncate ${conversation.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
-                          {conversation.user.name}
-                        </p>
-                        <span className="text-xs text-muted-foreground">
-                          {formatTime(conversation.timestamp)}
-                        </span>
-                      </div>
-                      <p className={`text-sm truncate ${conversation.unread ? 'font-medium' : 'text-muted-foreground'}`}>
-                        {conversation.lastMessage}
+        <div className="mt-4">
+          {loading ? (
+            <div className="text-center p-4">
+              <p>Loading conversations...</p>
+            </div>
+          ) : conversations.length === 0 ? (
+            <div className="text-center p-4">
+              <p className="text-muted-foreground">No messages yet</p>
+            </div>
+          ) : (
+            <ScrollArea className="h-[300px]">
+              {conversations.map(conversation => (
+                <div
+                  key={conversation.id}
+                  className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer"
+                  onClick={() => setActiveConversation(conversation.id)}
+                >
+                  <Avatar>
+                    <AvatarImage src={conversation.profiles.avatar_url} />
+                    <AvatarFallback>
+                      {conversation.profiles.username?.[0] || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">
+                      {conversation.profiles.username || 'Unknown User'}
+                    </p>
+                    {conversation.last_message && (
+                      <p className="text-sm text-muted-foreground truncate">
+                        {conversation.last_message}
                       </p>
-                    </div>
-                    {conversation.unread && (
-                      <div className="w-2 h-2 bg-thrivvo-orange rounded-full flex-shrink-0"></div>
                     )}
                   </div>
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground">
-                  <MessageSquare size={40} className="mb-2 opacity-50" />
-                  <p>No conversations yet</p>
-                  <p className="text-sm mt-1">Connect with other users to start chatting</p>
                 </div>
-              )}
-            </div>
-          </ScrollArea>
-        ) : (
-          <>
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4">
-                {chatHistory[activeConversation]?.map((message) => (
-                  <div 
-                    key={message.id} 
-                    className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
+              ))}
+            </ScrollArea>
+          )}
+        </div>
+        
+        {activeConversation && (
+          <div className="mt-4">
+            <ScrollArea className="h-[200px] mb-4">
+              {chatHistory[activeConversation]?.map(message => (
+                <div
+                  key={message.id}
+                  className={`flex ${
+                    message.sender_id === user?.id ? 'justify-end' : 'justify-start'
+                  } mb-2`}
+                >
+                  <div
+                    className={`px-3 py-2 rounded-lg ${
+                      message.sender_id === user?.id
+                        ? 'bg-thrivvo-teal text-white'
+                        : 'bg-muted'
+                    }`}
                   >
-                    <div 
-                      className={`max-w-[70%] p-3 rounded-lg ${
-                        message.sender === 'me' 
-                          ? 'bg-thrivvo-teal text-white rounded-br-none' 
-                          : 'bg-muted rounded-bl-none'
-                      }`}
-                    >
-                      <p>{message.text}</p>
-                      <p className={`text-xs mt-1 ${message.sender === 'me' ? 'text-white/80' : 'text-muted-foreground'}`}>
-                        {formatTime(message.timestamp)}
-                      </p>
-                    </div>
+                    <p>{message.text}</p>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </ScrollArea>
             
-            <div className="p-3 border-t">
-              <form 
-                className="flex items-center gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (activeConversation) {
-                    handleSendMessage(activeConversation);
+            <div className="flex gap-2">
+              <Input
+                placeholder="Type a message..."
+                value={messageText}
+                onChange={e => setMessageText(e.target.value)}
+                onKeyPress={e => {
+                  if (e.key === 'Enter') {
+                    handleSendMessage(e);
                   }
                 }}
+              />
+              <Button
+                size="icon"
+                onClick={handleSendMessage}
+                disabled={sending || !messageText.trim()}
               >
-                <Input 
-                  placeholder="Type a message..." 
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  className="flex-1"
-                />
-                <Button 
-                  type="submit" 
-                  size="icon"
-                  disabled={!messageText.trim()}
-                  className="bg-thrivvo-teal text-white hover:bg-thrivvo-teal/90"
-                >
-                  <Send size={18} />
-                </Button>
-              </form>
+                {sending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send size={16} />
+                )}
+              </Button>
             </div>
-          </>
+          </div>
         )}
       </DialogContent>
     </Dialog>
   );
-};
-
-// Persistent storage for DM state
-const STORAGE_KEY = 'thrivvo-direct-messages';
-
-// Function to save state to localStorage
-const saveMessagesToLocalStorage = (conversations: any[], chatHistory: Record<string, ChatMessage[]>) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      conversations,
-      chatHistory
-    }));
-  } catch (error) {
-    console.error('Error saving messages to localStorage:', error);
-  }
-};
-
-// Function to load state from localStorage
-const loadMessagesFromLocalStorage = () => {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (data) {
-      return JSON.parse(data);
-    }
-  } catch (error) {
-    console.error('Error loading messages from localStorage:', error);
-  }
-  return null;
 };
 
 export default DirectMessages;

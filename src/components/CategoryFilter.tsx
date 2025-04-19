@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { eventCategories } from '@/data/mockData';
+import { eventCategories } from '@/data/eventCategories';
 import { EventCategory } from '@/types';
 
 interface CategoryFilterProps {
@@ -19,15 +18,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   const location = useLocation();
   
   const handleCategoryClick = (category: EventCategory | null) => {
-    if (category === 'party') {
-      // Only navigate if we're not already on the house-parties page
-      if (location.pathname !== '/house-parties') {
-        navigate('/house-parties');
-      } else {
-        // If we're already on the house-parties page, just update the filter
-        onSelectCategory(category);
-      }
-    } else if (category === null && location.pathname !== '/') {
+    if (category === null && location.pathname !== '/') {
       // When "All" is clicked and not on home page, navigate to home page
       navigate('/');
     } else {

@@ -1,16 +1,4 @@
-
-export type EventCategory = 
-  | 'party' 
-  | 'club' 
-  | 'bar' 
-  | 'concert' 
-  | 'game-night' 
-  | 'food' 
-  | 'fitness' 
-  | 'networking' 
-  | 'outdoor' 
-  | 'sports'  // Added new "sports" category
-  | 'other';
+export type EventCategory = 'party' | 'club' | 'bar' | 'concert' | 'game-night' | 'food' | 'fitness' | 'networking' | 'outdoor' | 'sports' | 'other';
 
 export interface Event {
   id: string;
@@ -20,56 +8,51 @@ export interface Event {
   location: {
     name: string;
     address: string;
-    distance: number; // in miles or kilometers
+    distance: number;
   };
   time: {
-    start: string; // ISO string
-    end?: string; // ISO string, optional for events without specific end time
+    start: string;
+    end: string | null;
   };
   host: {
     id: string;
     name: string;
     verified: boolean;
-    avatar?: string;
+    avatar: string | null;
   };
   attendees: {
     count: number;
-    max?: number; // Optional, for events with limited spots
+    max: number | null;
+    ids: string[];
   };
-  price?: {
+  price: {
     amount: number;
     currency: string;
-  };
+  } | null;
   images: string[];
   vibe: string[];
-  isPrivate: boolean;
-  isVerified?: boolean; // New field for event verification
-  monetized?: boolean; // New field to explicitly track if the event is monetized
+  monetized: boolean;
+  isVerified: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface User {
   id: string;
-  name: string;
-  avatar: string;
-  interests: EventCategory[];
-  status: 'available' | 'busy' | 'offline';
-  location?: {
-    lat: number;
-    lng: number;
-  };
-  distance?: number; // calculated on the fly based on current location
+  email: string;
+  full_name: string;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // Add a Profile interface that matches the Supabase profiles table structure
 export interface Profile {
   id: string;
-  username: string;
-  bio: string;
-  location: string;
-  avatar_url: string;
-  interests: string[];
-  updated_at: string;
+  user_id: string;
+  bio: string | null;
+  location: string | null;
+  website: string | null;
   created_at: string;
-  verified: boolean;
-  distance_preference: number; // Define the distance_preference property
+  updated_at: string;
 }
