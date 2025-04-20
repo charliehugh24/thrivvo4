@@ -68,3 +68,4 @@ Simply open [Lovable](https://lovable.dev/projects/6051217f-b00a-48a7-8bc4-76faa
 
 We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
 # thrivvo3
+# thrivvo4
