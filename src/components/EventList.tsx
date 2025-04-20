@@ -245,6 +245,9 @@ const EventList: React.FC<EventListProps> = ({
         description: `You have deleted "${eventToDelete.title}"`,
       });
 
+      // Refresh the events list
+      await fetchEvents();
+
       if (onCancelEvent) {
         onCancelEvent(eventToDelete.id);
       }
