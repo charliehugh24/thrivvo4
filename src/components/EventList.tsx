@@ -36,6 +36,68 @@ const EventList: React.FC<EventListProps> = ({
   const [eventToDelete, setEventToDelete] = React.useState<Event | null>(null);
   const [events, setEvents] = React.useState<Event[]>([]);
 
+  const fetchEvents = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      let query = supabase
+        .from('events')
+        .select('*');
+
+      if (type === 'hosted') {
+        query = query.eq('host->>id', user.id);
+      } else if (type === 'attending') {
+        // First get the event IDs from the event_attendees table
+        const { data: attendingData } = await supabase
+          .from('events')
+          .select('id')
+          .contains('attendees->ids', [user.id]);
+
+        if (attendingData && attendingData.length > 0) {
+          const eventIds = attendingData.map(event => event.id);
+          query = query.in('id', eventIds);
+        } else {
+          setEvents([]);
+          return;
+        }
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Convert the data to match our Event type
+      const typedEvents = (data || []).map(event => {
+        const eventAttendees = event.attendees as { ids: string[]; count: number; max: number | null };
+        return {
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          category: event.category as EventCategory,
+          location: event.location as { name: string; address: string; distance: number },
+          time: event.time as { start: string; end: string | null },
+          host: event.host as { id: string; name: string; verified: boolean; avatar: string | null },
+          attendees: {
+            count: eventAttendees.count || 0,
+            max: eventAttendees.max || null,
+            ids: eventAttendees.ids || []
+          },
+          price: event.price as { amount: number; currency: string } | null,
+          images: event.images || [],
+          vibe: event.vibe || [],
+          monetized: event.monetized || false,
+          isVerified: event.isVerified || false,
+          created_at: event.created_at || new Date().toISOString(),
+          updated_at: event.updated_at || new Date().toISOString()
+        };
+      });
+      
+      setEvents(typedEvents);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    }
+  };
+
   useEffect(() => {
     fetchEvents();
   }, [type]);
@@ -196,68 +258,6 @@ const EventList: React.FC<EventListProps> = ({
     } finally {
       setDeleteDialogOpen(false);
       setEventToDelete(null);
-    }
-  };
-
-  const fetchEvents = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      let query = supabase
-        .from('events')
-        .select('*');
-
-      if (type === 'hosted') {
-        query = query.eq('host->>id', user.id);
-      } else if (type === 'attending') {
-        // First get the event IDs from the event_attendees table
-        const { data: attendingData } = await supabase
-          .from('events')
-          .select('id')
-          .contains('attendees->ids', [user.id]);
-
-        if (attendingData && attendingData.length > 0) {
-          const eventIds = attendingData.map(event => event.id);
-          query = query.in('id', eventIds);
-        } else {
-          setEvents([]);
-          return;
-        }
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      // Convert the data to match our Event type
-      const typedEvents = (data || []).map(event => {
-        const eventAttendees = event.attendees as { ids: string[]; count: number; max: number | null };
-        return {
-          id: event.id,
-          title: event.title,
-          description: event.description,
-          category: event.category as EventCategory,
-          location: event.location as { name: string; address: string; distance: number },
-          time: event.time as { start: string; end: string | null },
-          host: event.host as { id: string; name: string; verified: boolean; avatar: string | null },
-          attendees: {
-            count: eventAttendees.count || 0,
-            max: eventAttendees.max || null,
-            ids: eventAttendees.ids || []
-          },
-          price: event.price as { amount: number; currency: string } | null,
-          images: event.images || [],
-          vibe: event.vibe || [],
-          monetized: event.monetized || false,
-          isVerified: event.isVerified || false,
-          created_at: event.created_at || new Date().toISOString(),
-          updated_at: event.updated_at || new Date().toISOString()
-        };
-      });
-      
-      setEvents(typedEvents);
-    } catch (error) {
-      console.error('Error fetching events:', error);
     }
   };
 
