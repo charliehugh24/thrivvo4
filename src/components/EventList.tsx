@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarIcon, ClockIcon, MapPinIcon, UserIcon, CheckCircle, DollarSign, Share2, X, Trash2 } from 'lucide-react';
-import { Event } from '@/types';
+import { Event, EventCategory } from '@/types';
 import { formatDistanceToNow, isValid } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -17,21 +17,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { formatTimeDistance } from '@/lib/utils';
 
 interface EventListProps {
-  events: Event[];
-  emptyMessage?: string;
-  showCancelOption?: boolean;
+  type: 'hosted' | 'attending';
   onCancelEvent?: (eventId: string) => void;
-  onDeleteEvent?: (eventId: string) => void;
 }
 
 const EventList: React.FC<EventListProps> = ({ 
-  events, 
-  emptyMessage = "No events found",
-  showCancelOption = false,
-  onCancelEvent,
-  onDeleteEvent
+  type,
+  onCancelEvent
 }) => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -39,31 +34,22 @@ const EventList: React.FC<EventListProps> = ({
   const [eventToCancel, setEventToCancel] = React.useState<Event | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [eventToDelete, setEventToDelete] = React.useState<Event | null>(null);
+  const [events, setEvents] = React.useState<Event[]>([]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [type]);
 
   if (events.length === 0) {
     return (
       <div className="text-center p-8">
-        <h3 className="text-lg font-medium">{emptyMessage}</h3>
+        <h3 className="text-lg font-medium">No events found</h3>
         <p className="text-muted-foreground">
           Try selecting a different category or check back later
         </p>
       </div>
     );
   }
-
-  // Helper function to safely format time distance
-  const formatTimeDistance = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      if (!isValid(date)) {
-        return 'Invalid date';
-      }
-      return formatDistanceToNow(date, { addSuffix: true });
-    } catch (error) {
-      console.error('Error formatting date:', dateString, error);
-      return 'Date unavailable';
-    }
-  };
 
   const handleShare = (event: Event, e: React.MouseEvent) => {
     e.preventDefault();
@@ -120,17 +106,18 @@ const EventList: React.FC<EventListProps> = ({
 
       if (fetchError) throw fetchError;
 
+      const eventAttendees = currentEvent.attendees as { ids: string[]; count: number; max: number | null };
       // Remove user from attendees
-      const updatedIds = currentEvent.attendees.ids.filter((id: string) => id !== user.id);
-      const updatedCount = currentEvent.attendees.count - 1;
+      const updatedIds = eventAttendees.ids.filter(id => id !== user.id);
+      const updatedCount = eventAttendees.count - 1;
 
       const { error: updateError } = await supabase
         .from('events')
         .update({
           attendees: {
-            ...currentEvent.attendees,
             ids: updatedIds,
-            count: updatedCount
+            count: updatedCount,
+            max: eventAttendees.max
           }
         })
         .eq('id', eventToCancel.id);
@@ -196,8 +183,8 @@ const EventList: React.FC<EventListProps> = ({
         description: `You have deleted "${eventToDelete.title}"`,
       });
 
-      if (onDeleteEvent) {
-        onDeleteEvent(eventToDelete.id);
+      if (onCancelEvent) {
+        onCancelEvent(eventToDelete.id);
       }
     } catch (error) {
       console.error('Error deleting event:', error);
@@ -212,111 +199,175 @@ const EventList: React.FC<EventListProps> = ({
     }
   };
 
+  const fetchEvents = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      let query = supabase
+        .from('events')
+        .select('*');
+
+      if (type === 'hosted') {
+        query = query.eq('host->>id', user.id);
+      } else if (type === 'attending') {
+        // First get the event IDs from the event_attendees table
+        const { data: attendingData } = await supabase
+          .from('events')
+          .select('id')
+          .contains('attendees->ids', [user.id]);
+
+        if (attendingData && attendingData.length > 0) {
+          const eventIds = attendingData.map(event => event.id);
+          query = query.in('id', eventIds);
+        } else {
+          setEvents([]);
+          return;
+        }
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Convert the data to match our Event type
+      const typedEvents = (data || []).map(event => {
+        const eventAttendees = event.attendees as { ids: string[]; count: number; max: number | null };
+        return {
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          category: event.category as EventCategory,
+          location: event.location as { name: string; address: string; distance: number },
+          time: event.time as { start: string; end: string | null },
+          host: event.host as { id: string; name: string; verified: boolean; avatar: string | null },
+          attendees: {
+            count: eventAttendees.count || 0,
+            max: eventAttendees.max || null,
+            ids: eventAttendees.ids || []
+          },
+          price: event.price as { amount: number; currency: string } | null,
+          images: event.images || [],
+          vibe: event.vibe || [],
+          monetized: event.monetized || false,
+          isVerified: event.isVerified || false,
+          created_at: event.created_at || new Date().toISOString(),
+          updated_at: event.updated_at || new Date().toISOString()
+        };
+      });
+      
+      setEvents(typedEvents);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {events.map((event) => (
-        <div key={event.id} className="relative">
-          <Link 
-            to={`/event/${event.id}`}
-            className="block"
-          >
-            <div className="flex gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-              <div className="relative w-24 h-24 rounded-md overflow-hidden shrink-0">
-                <img 
-                  src={event.images[0]} 
-                  alt={event.title} 
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-1 left-1 flex flex-col gap-1">
-                  {(event.price && event.price.amount > 0) || event.monetized ? (
-                    <Badge variant="secondary" className="bg-thrivvo-teal text-white">
-                      <DollarSign size={12} className="mr-1" /> Premium
-                    </Badge>
-                  ) : null}
-                  
-                  {event.isVerified && (
-                    <Badge variant="outline" className="bg-white/90 text-thrivvo-orange border-thrivvo-orange">
-                      <CheckCircle size={12} className="mr-1 text-thrivvo-orange" /> Verified
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-medium text-base truncate">{event.title}</h3>
-                  {event.isVerified && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <CheckCircle size={16} className="text-thrivvo-orange" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Verified event</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </div>
-                
-                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                  <CalendarIcon size={12} />
-                  <span>
-                    {event.time && event.time.start ? new Date(event.time.start).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric' 
-                    }) : 'Date TBD'}
-                  </span>
-                  <ClockIcon size={12} className="ml-1" />
-                  <span>
-                    {event.time && event.time.start ? formatTimeDistance(event.time.start) : 'Time TBD'}
-                  </span>
-                </div>
-                
-                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                  <MapPinIcon size={12} />
-                  <span className="truncate">{event.location.name}</span>
-                </div>
-                
-                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                  <UserIcon size={12} />
-                  <span>{event.attendees.count} attending</span>
-                </div>
-              </div>
-            </div>
-          </Link>
-          <div className="absolute top-2 right-2 flex space-x-1">
-            {user && event.attendees.ids.includes(user.id) && event.host.id !== user.id && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-full bg-background/80 hover:bg-destructive hover:text-white shadow-sm"
-                onClick={(e) => handleCancelClick(event, e)}
-              >
-                <X size={14} />
-              </Button>
-            )}
-            {user && event.host.id === user.id && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-full bg-background/80 hover:bg-destructive hover:text-white shadow-sm"
-                onClick={(e) => handleDeleteClick(event, e)}
-              >
-                <Trash2 size={14} />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-full bg-background/80 hover:bg-background shadow-sm"
-              onClick={(e) => handleShare(event, e)}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {events.map((event) => (
+          <div key={event.id} className="relative">
+            <Link 
+              to={`/event/${event.id}`}
+              className="block"
             >
-              <Share2 size={14} />
-            </Button>
+              <div className="flex gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                <div className="relative w-24 h-24 rounded-md overflow-hidden shrink-0">
+                  <img 
+                    src={event.images[0]} 
+                    alt={event.title} 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-1 left-1 flex flex-col gap-1">
+                    {(event.price && event.price.amount > 0) || event.monetized ? (
+                      <Badge variant="secondary" className="bg-thrivvo-teal text-white">
+                        <DollarSign size={12} className="mr-1" /> Premium
+                      </Badge>
+                    ) : null}
+                    
+                    {event.isVerified && (
+                      <Badge variant="outline" className="bg-white/90 text-thrivvo-orange border-thrivvo-orange">
+                        <CheckCircle size={12} className="mr-1 text-thrivvo-orange" /> Verified
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium text-base truncate">{event.title}</h3>
+                    {event.isVerified && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <CheckCircle size={16} className="text-thrivvo-orange" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Verified event</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                  
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <CalendarIcon size={12} />
+                    <span>
+                      {event.time && event.time.start ? new Date(event.time.start).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric' 
+                      }) : 'Date TBD'}
+                    </span>
+                    <ClockIcon size={12} className="ml-1" />
+                    <span>
+                      {event.time && event.time.start ? formatTimeDistance(event.time.start) : 'Time TBD'}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <MapPinIcon size={12} />
+                    <span className="truncate">{event.location.name}</span>
+                  </div>
+                  
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    <UserIcon size={12} />
+                    <span>{event.attendees.count} attending</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+            <div className="absolute top-2 right-2 flex space-x-1">
+              {user && event.attendees.ids.includes(user.id) && event.host.id !== user.id && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-full bg-background/80 hover:bg-destructive hover:text-white shadow-sm"
+                  onClick={(e) => handleCancelClick(event, e)}
+                >
+                  <X size={14} />
+                </Button>
+              )}
+              {user && event.host.id === user.id && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-full bg-background/80 hover:bg-destructive hover:text-white shadow-sm"
+                  onClick={(e) => handleDeleteClick(event, e)}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-full bg-background/80 hover:bg-background shadow-sm"
+                onClick={(e) => handleShare(event, e)}
+              >
+                <Share2 size={14} />
+              </Button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       {/* Cancel Attendance Dialog */}
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
