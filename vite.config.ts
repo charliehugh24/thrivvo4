@@ -31,6 +31,6 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  base: process.env.NODE_ENV === 'production' ? '/thrivvo-event-app/' : '/',
+  base: '/',
   publicDir: 'public',
 }));
