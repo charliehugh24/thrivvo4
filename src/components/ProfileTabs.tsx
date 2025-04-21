@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import EventList from '@/components/EventList';
-import { MessageSquare, CalendarDays, Image, Pencil, RefreshCw, Trash2 } from 'lucide-react';
+import { MessageSquare, CalendarDays, Image, Pencil, Trash2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +30,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   const [hostedEvents, setHostedEvents] = useState<Event[]>([]);
   const [attendingEvents, setAttendingEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   
   const fetchEvents = async () => {
     if (!user) return;
@@ -53,21 +52,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
         .order('created_at', { ascending: false });
 
       if (attendingError) throw attendingError;
-
-      // Debug logging
-      console.log('Hosted events query:', {
-        userId: user.id,
-        query: `host->>id = ${user.id}`,
-        resultCount: hostedData?.length || 0,
-        events: hostedData
-      });
-
-      console.log('Attending events query:', {
-        userId: user.id,
-        query: `contains(attendees->ids, ["${user.id}"])`,
-        resultCount: attendingData?.length || 0,
-        events: attendingData
-      });
 
       // Convert the data to match our Event type
       const typedHostedEvents = (hostedData || []).map(event => ({
@@ -112,11 +96,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   useEffect(() => {
     fetchEvents();
   }, [user]);
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await fetchEvents();
-  };
   
   const handleEventClick = (eventId: string) => {
     navigate(`/event/${eventId}`);
@@ -141,7 +120,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     </div>
   );
 
-  if (loading && !refreshing) {
+  if (loading) {
     return <div className="p-4">Loading events...</div>;
   }
 
@@ -152,28 +131,16 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           <TabsTrigger value="hosted">Hosted Events</TabsTrigger>
           <TabsTrigger value="attending">Attending Events</TabsTrigger>
         </TabsList>
-        <div className="flex gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleRefresh}
-            disabled={refreshing}
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
       </div>
       <TabsContent value="hosted">
         <EventList 
-          events={hostedEvents} 
-          emptyMessage="You haven't hosted any events yet"
-          onDeleteEvent={handleDeleteEvent}
+          type="hosted"
+          onCancelEvent={handleDeleteEvent}
         />
       </TabsContent>
       <TabsContent value="attending">
         <EventList 
-          events={attendingEvents} 
-          emptyMessage="You aren't attending any events yet"
+          type="attending"
         />
       </TabsContent>
     </Tabs>
