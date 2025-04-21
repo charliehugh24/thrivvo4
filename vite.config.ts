@@ -30,6 +30,6 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  base: '/thrivvo4/',
+  base: process.env.NODE_ENV === 'production' ? '/thrivvo4/' : '/',
   publicDir: 'public',
 }));
