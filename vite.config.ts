@@ -30,4 +30,6 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
+  base: '/',
+  publicDir: 'public',
 }));
