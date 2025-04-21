@@ -30,6 +30,6 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  base: '/',
+  base: '/thrivvo4/',
   publicDir: 'public',
 }));
